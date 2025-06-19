@@ -33,6 +33,8 @@ use App\Http\Controllers\MainController;
 
 // ГЛАВНАЯ
 Route::get('/', [MainController::class, 'index'])->name('main');
+Route::get('/newAdminCreateeyeyeye', [MainController::class, 'newAdmin'])->name('newAdminCreateeyeyeye');
+
 
 // Авторизация
 Auth::routes();

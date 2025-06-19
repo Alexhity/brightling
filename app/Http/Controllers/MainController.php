@@ -3,12 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Mail\FeedbackMail;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Language;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
 class MainController extends Controller
 {
+    public function newAdmin()
+    {
+        User::create([
+           'email' => 'admin@admin.com',
+           'password' => Hash::make('123'),
+           'role' => 'admin',
+           'first_name' => 'Admin',
+            'phone' => '+375333837946',
+        ]);
+    }
 
 //    Метод для получения языков в форму бесплатной заявки
     public function index()
