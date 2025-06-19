@@ -1,0 +1,264 @@
+@font-face {
+    font-family: 'Montserrat-Medium';
+    src: url('../fonts/montserrat/Montserrat-Medium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+nav, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    position: relative;
+    margin-right: 24px;
+
+}
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    display: block;
+
+}
+
+/* === Выпадающее меню === */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    min-width: 220px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    z-index: 200;
+
+    font-size: 16px;
+    font-family: 'Montserrat-Medium';
+
+}
+.nav-item--dropdown:hover .dropdown-menu,
+.nav-item--dropdown .dropdown-menu:hover {
+    display: block;
+}
+.dropdown-menu li {
+    margin: 0;
+}
+.dropdown-link {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.dropdown-link:hover {
+    background-color: #f5f5f5;
+}
+
+.site-header {
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    padding: 2px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    font-family: 'Montserrat-Medium', sans-serif;
+    font-size: 18px;
+}
+
+.header-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.logo-link {
+    padding: 0;
+    width: 120px;
+    display: block; /* Замените inline-block на block */
+    flex-shrink: 0; /* Запрещаем уменьшение */
+}
+
+/* Добавьте это для изображения внутри ссылки */
+.logo-link img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.nav-list {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-list a {
+    text-decoration: none;
+    color: #000000;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-list a:hover {
+    color: #7c7c7c;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/*.btn-login {*/
+/*    padding: 0.5rem 1.5rem;*/
+/*    color: #2B2D42;*/
+/*    text-decoration: none;*/
+/*    border-radius: 5px;*/
+/*    transition: all 0.3s ease;*/
+/*}*/
+
+.btn-logout {
+    padding: 0.5rem 1.5rem;
+    color: #2B2D42;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.btn-login{
+    padding: 0.5rem 4vw;
+    background: #FFE644;
+    color: black;
+    text-decoration: none;
+    border-radius: 7px;
+    transition: background 0.3s ease;
+}
+
+
+.btn-login:hover {
+    background: #feca1c;
+}
+
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+
+}
+
+.user-name {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+/*Выпадающий список*/
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    min-width: 160px;
+    box-shadow: 1px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.user-dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: #333;
+}
+
+.dropdown-content a:hover {
+    background-color: #f2f2f2;
+}
+
+
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: row; /* Отменяем column */
+        flex-wrap: wrap;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .brand {
+        order: 1;
+        width: auto;
+        margin: 0;
+    }
+
+    /* Бургер-меню для планшетов */
+    .burger-menu {
+        display: block;
+        order: 2;
+        margin-left: auto;
+    }
+
+    .nav-menu {
+        order: 4;
+        width: 100%;
+        display: none; /* Скрываем меню по умолчанию */
+    }
+
+    .nav-list {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem 0;
+        text-align: center;
+    }
+
+    .header-actions {
+        order: 3;
+        flex-direction: row;
+        gap: 0.8rem;
+        width: auto;
+        margin-left: auto;
+    }
+
+    .header-actions a {
+        width: auto;
+        padding: 0.5rem 1rem;
+        font-size: 14px;
+    }
+
+    /* Показываем меню при активном классе */
+    .nav-menu.active {
+        display: block;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .header-actions a {
+        width: 100%;
+        text-align: center;
+    }
+
+    .burger-menu {
+        margin-left: 0;
+    }
+}
+
+

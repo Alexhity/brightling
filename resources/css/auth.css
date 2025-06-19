@@ -1,0 +1,92 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'tailwindcss';
+
+@font-face {
+    font-family: 'Montserrat-Medium';
+    src: url('./fonts/montserrat/Montserrat-Medium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Bold';
+    src: url('./fonts/montserrat/Montserrat-Bold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'OpenSans';
+    src: url('./fonts/opensans/OpenSans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Основные стили */
+.auth-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 3rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    font-family: 'Montserrat-Medium', sans-serif;
+}
+
+.brand-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-family: 'Montserrat Bold', sans-serif;
+    font-size: 40px;
+}
+
+.input-group {
+    margin-bottom: 1.7rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4A5568;
+}
+
+.input-group input{
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+input::placeholder {
+    font-size: 18px;
+}
+
+.auth-button {
+    width: 100%;
+    padding: 12px;
+    background: #8986FF;
+    color: black;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.auth-button:hover {
+    background: #7e7ef2;
+}
+
+.auth-links {
+    margin-top: 4%;
+    font-size: 14px;
+    text-align: right;
+
+}
+
+.auth-links a{
+    text-decoration: none;
+    color: #8986FF;
+}
+
+

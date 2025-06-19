@@ -1,0 +1,27 @@
+@font-face {
+    'Montserrat-Medium';
+    src: url('./fonts/montserrat/Montserrat-Medium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Bold';
+    src: url('./fonts/montserrat/Montserrat-Bold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat SemiBold';
+    src: url('./fonts/montserrat/Montserrat-SemiBold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'OpenSans Regular';
+    src: url('./fonts/opensans/OpenSans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

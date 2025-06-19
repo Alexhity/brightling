@@ -1,0 +1,15 @@
+/* Добавьте эти стили */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+    padding-top: 80px; /* Отступ под фиксированную шапку */
+}
+
+.footer {
+    flex-shrink: 0;
+}
