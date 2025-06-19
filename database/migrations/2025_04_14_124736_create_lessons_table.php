@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->time('time');
             $table->string('status');
-            $table->integer('mark')->unsigned()->nullable()->change();
+            $table->integer('mark')->unsigned()->nullable();
             $table->foreignId('course_id')
                 ->constrained('courses')
                 ->cascadeOnDelete()
