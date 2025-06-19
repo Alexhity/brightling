@@ -3,7 +3,7 @@
 @section('title', 'Студенческая панель - Мои курсы')
 
 @section('styles')
-    @vite(['resources/css/app.css', 'resources/css/student.css'])
+    @vite(['resources/css/app.css'])
 @endsection
 
 @section('content')
