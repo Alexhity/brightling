@@ -41,12 +41,12 @@
     </style>
 </head>
 <body>
-@include('partials.headerDash')
+@include('partials.headerdash')
 
 <main class="container py-4" style="margin-top: 65px;">
     @yield('content')
 </main>
 @stack('scripts')
-{{--@include('partials.footerDash')--}}
+{{--@include('partials.footerdash')--}}
 </body>
 </html>
