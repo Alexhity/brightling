@@ -30,7 +30,7 @@ return new class extends Migration
             $table->integer('duration')->unsigned();
 
             // Тип занятия: групповой, индивидуальный или бесплатный слот
-            $table->enum('type', ['group', 'individual', 'free'])
+            $table->enum('type', ['group', 'individual', 'test']) ->default('group')
                 ->default('group');
 
             // Активен ли этот слот (если Нужно выключить временно)

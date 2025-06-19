@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Timetable extends Model
@@ -28,11 +29,30 @@ class Timetable extends Model
     ];
 
     protected $casts = [
-        'date'              => 'date',
+        'issued_at'              => 'date',
         'start_time'        => 'datetime:H:i',
         'enrollment_status' => 'datetime',
         'active'            => 'boolean',
     ];
+
+    const TYPE_GROUP = 'group';
+    const TYPE_INDIVIDUAL = 'individual';
+    const TYPE_TEST = 'test';
+
+
+    public static function lessonTypes()
+    {
+        return [
+            self::TYPE_GROUP => 'Групповое',
+            self::TYPE_INDIVIDUAL => 'Индивидуальное',
+            self::TYPE_TEST => 'Тестовый урок',
+        ];
+    }
+
+    public function isTestLesson()
+    {
+        return $this->type === self::TYPE_TEST;
+    }
 
     // Слоты регулярные: date = null
     public function isRegular(): bool
@@ -66,6 +86,11 @@ class Timetable extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function overrideTeacher()
+    {
+        return $this->belongsTo(User::class, 'override_user_id');
     }
 
     // Ученики, записанные на этот слот
@@ -108,32 +133,76 @@ class Timetable extends Model
         return $this->belongsTo(self::class, 'parent_id');
     }
 
-
-// Преподаватель‑override для исключения
-    public function overrideTeacher()
+    // Аксессоры для удобства
+    public function getEffectiveTeacherAttribute()
     {
-        return $this->belongsTo(User::class, 'override_user_id');
+        return $this->override_user_id ? User::find($this->override_user_id) : $this->teacher;
     }
 
-    public function actualOn(\Carbon\Carbon $date)
+    public function getIsExceptionAttribute()
     {
-        if ($this->parent_id && $this->date === $date->toDateString()) {
-            // это исключение
-            return [
-                'start_time' => $this->override_start_time ?? $this->start_time,
-                'duration'   => $this->override_duration   ?? $this->duration,
-                'user_id'    => $this->override_user_id    ?? $this->user_id,
-                'cancelled'  => $this->cancelled,
-            ];
+        return !is_null($this->parent_id);
+    }
+
+    public function getIsCancelledAttribute()
+    {
+        return $this->cancelled;
+    }
+
+    public function getDisplayDateAttribute()
+    {
+        if ($this->date) {
+            return $this->date;
         }
-        // базовый слот
-        return [
-            'start_time' => $this->start_time,
-            'duration'   => $this->duration,
-            'user_id'    => $this->user_id,
-            'cancelled'  => false,
-        ];
+
+        if ($this->weekday) {
+            $weekdayMap = [
+                'понедельник' => Carbon::MONDAY,
+                'вторник' => Carbon::TUESDAY,
+                'среда' => Carbon::WEDNESDAY,
+                'четверг' => Carbon::THURSDAY,
+                'пятница' => Carbon::FRIDAY,
+                'суббота' => Carbon::SATURDAY,
+                'воскресенье' => Carbon::SUNDAY,
+            ];
+
+            $dayOfWeek = $weekdayMap[$this->weekday] ?? null;
+
+            if ($dayOfWeek) {
+                return Carbon::now()->next($dayOfWeek);
+            }
+        }
+
+        return null;
     }
+
+
+
+//// Преподаватель‑override для исключения
+//    public function overrideTeacher()
+//    {
+//        return $this->belongsTo(User::class, 'override_user_id');
+//    }
+//
+//    public function actualOn(\Carbon\Carbon $date)
+//    {
+//        if ($this->parent_id && $this->date === $date->toDateString()) {
+//            // это исключение
+//            return [
+//                'start_time' => $this->override_start_time ?? $this->start_time,
+//                'duration'   => $this->override_duration   ?? $this->duration,
+//                'user_id'    => $this->override_user_id    ?? $this->user_id,
+//                'cancelled'  => $this->cancelled,
+//            ];
+//        }
+//        // базовый слот
+//        return [
+//            'start_time' => $this->start_time,
+//            'duration'   => $this->duration,
+//            'user_id'    => $this->user_id,
+//            'cancelled'  => false,
+//        ];
+//    }
 
 
 }

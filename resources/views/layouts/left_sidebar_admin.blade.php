@@ -131,7 +131,8 @@
                 </li>
 
                 <li>
-                    <a href="#">
+                    <a href="{{ route('admin.certificates.create') }}"
+                       class="{{ request()->routeIs('admin.certificates.create') ? 'active' : '' }}">
                         Сертификаты
                     </a>
                 </li>

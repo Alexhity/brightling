@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AboutSchoolController;
+use App\Http\Controllers\AdminCertificateController;
 use App\Http\Controllers\AdminLessonController;
 use App\Http\Controllers\AdminMessageController;
 use App\Http\Controllers\AdminPriceController;
@@ -100,7 +101,6 @@ Route::delete('admin/courses/{course}/students/{user}', [AdminCoursesController:
     ->name('admin.courses.removeStudent');
 
 
-
 // Тарифы
 // Список тарифов
 Route::get('admin/prices', [AdminPriceController::class, 'index'])
@@ -153,8 +153,6 @@ Route::patch(
 )->name('admin.timetables.updateSlot');
 
 
-
-
 // Языки
 // Показываем список языков
 Route::get('admin/languages', [AdminLanguagesController::class, 'index'])
@@ -202,6 +200,14 @@ Route::get('admin/messages/{message}', [AdminMessageController::class, 'show'])
 Route::patch('admin/messages/{message}', [AdminMessageController::class, 'reply'])
     ->name('admin.messages.reply');
 
+
+//Сертификаты
+// Форма выдачи сертификатов (одновременно и индивидуально, и по уровню)
+Route::get('admin/certificates/create', [AdminCertificateController::class, 'create'])
+    ->name('admin.certificates.create');
+// Обработка выдачи (тот же метод и для индивидуальной, и для массовой)
+Route::post('admin/certificates', [AdminCertificateController::class, 'store'])
+    ->name('admin.certificates.store');
 
 
 
