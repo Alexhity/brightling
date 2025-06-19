@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('file')->nullable();
             $table->string('link')->nullable();
             $table->string('status')->default('pending');
-            $table->integer('mark')->unsigned()->nullable()->change();
+            $table->integer('mark')->unsigned()->nullable();
             // По желанию можно сделать enum('status', ['pending','submitted','graded','rejected']), но string тоже ок.
             $table->foreignId('lesson_id')
                 ->constrained('lessons')
