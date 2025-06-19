@@ -13,7 +13,7 @@ export default defineConfig({
                 'resources/css/components/header.css',
                 'resources/css/components/footer.css', // Добавьте эту строку
                 'resources/css/components/footerdash.css', // Добавьте эту строку
-                'resources/css/components/headerdaash.css', // Добавьте эту строку
+                'resources/css/components/headerdash.css', // Добавьте эту строку
                 'resources/js/app.js'
             ],
             refresh: true,
