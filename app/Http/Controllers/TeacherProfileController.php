@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Language;
+use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -38,12 +39,30 @@ class TeacherProfileController extends Controller
         ],[
             'avatar.image'=>'Файл должен быть изображением',
         ]);
+//        if ($request->hasFile('avatar')) {
+//            // сохраняем в storage/app/public/avatars
+//            $path = $request->file('avatar')->store('avatars', 'public');
+//            // сохраняем относительный путь в БД, например 'avatars/имя_файла.jpg'
+//            $data['file_path'] = $path;
+//        }
+        // Если пришёл файл
         if ($request->hasFile('avatar')) {
-            // сохраняем в storage/app/public/avatars
-            $path = $request->file('avatar')->store('avatars', 'public');
-            // сохраняем относительный путь в БД, например 'avatars/имя_файла.jpg'
-            $data['file_path'] = $path;
+            $file = $request->file('avatar');
+            // Генерируем уникальное имя
+            $filename = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            // Куда сохраняем: public/images/profile
+            $destination = public_path('images/profile');
+            // Создаём папку, если её нет
+            if (!File::exists($destination)) {
+                File::makeDirectory($destination, 0755, true);
+            }
+            // Перемещаем файл
+            $file->move($destination, $filename);
+
+            // Сохраняем относительный путь в БД
+            $data['file_path'] = 'images/profile/' . $filename;
         }
+
         $user->update($data);
         if (!empty($data['languages'])) {
             $user->languages()->sync($data['languages']);

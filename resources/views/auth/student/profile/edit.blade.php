@@ -230,7 +230,9 @@
                     {{-- Загрузка фото --}}
                     <div class="form-group">
                         <label>Загрузить фото</label>
-                        <input type="file" name="avatar" accept="image/*"
+                        <input type="file"
+                               name="avatar"
+                               accept="image/*"
                                class="@error('avatar') input-error @enderror">
                         @error('avatar')<div class="error">{{ $message }}</div>@enderror
                     </div>
@@ -263,7 +265,7 @@
             <div class="sidebar-section">
                 <h2>Аватар</h2>
                 @if($user->file_path)
-                    <img src="{{ asset('storage/'.$user->file_path) }}" 
+                    <img src="{{ asset('storage/'.$user->file_path) }}"
                          alt="Avatar" class="avatar-preview">
                 @else
                     <p class="about-text">Нет фото</p>
