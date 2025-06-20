@@ -11,7 +11,10 @@
         <!-- Навигационное меню -->
         <nav class="nav-menu">
             <ul class="nav-list">
-                <li><a href="#courses">Курсы</a></li>
+                <a href="{{ route('courses') }}"
+                   class="{{ request()->routeIs('courses') ? 'active' : '' }}">
+                    Курсы
+                </a>
                 <li><a href="#teachers">Преподаватели</a></li>
                 <li><a href="#pricing">Стоимость</a></li>
                 <li class="nav-item nav-item--dropdown">
@@ -19,7 +22,7 @@
                     <ul class="dropdown-menu">
                         <li><a href="{{ route('about.school', ['#faq']) }}" class="dropdown-link">Часто задаваемые вопросы</a></li>
                         <li><a href="{{ route('about.school', ['#reviews']) }}" class="dropdown-link">Отзывы</a></li>
-                        <li><a href="{{ route('about.school', ['#history']) }}" class="dropdown-link">История школы</a></li>
+                        <li><a href="{{ route('about.school', ['#history']) }}" class="dropdown-link">Контакты</a></li>
                     </ul>
                 </li>
 

@@ -3,55 +3,64 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\Language;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        // Инициализация построителя запроса
-        $query = Course::with('language', 'price');
+        // Справочники
+        $languages = Language::orderBy('name')->get();
+        // русские метки уровней
+        $levels    = [
+            'beginner' => 'Начинающий',
+            'A1'       => 'A1',
+            'A2'       => 'A2',
+            'B1'       => 'B1',
+            'B2'       => 'B2',
+            'C1'       => 'C1',
+            'C2'       => 'C2',
+        ];
+        $formats   = ['individual'=>'Индивидуальный','group'=>'Групповой'];
 
-        // Фильтрация по поисковому запросу
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
+        // фильтры из запроса
+        $search   = $request->input('search');
+        $language = $request->input('language');
+        $level    = $request->input('level');
+        $format   = $request->input('format');
+        $sort     = $request->input('sort', 'title');
+        $dir      = $request->input('dir', 'asc');
+
+        // базовый запрос — только курсы со статусом recruiting
+        $query = Course::with(['language','price','timetables' => function($q) {
+            $q->where('active', true)
+                ->orderByRaw("COALESCE(date, '0001-01-01') asc")
+                ->orderBy('weekday')
+                ->orderBy('start_time');
+        }])
+            ->where('status','recruiting');
+
+        // применяем поиск/фильтры
+        if ($search)   $query->where('title','like',"%{$search}%");
+        if ($language) $query->where('language_id',$language);
+        if ($level)    $query->where('level',$level);
+        if ($format)   $query->where('format',$format);
+
+        // сортировка
+        if ($sort === 'price_total') {
+            $query->selectRaw('courses.*, (prices.unit_price * courses.lessons_count) as price_total')
+                ->join('prices','courses.price_id','=','prices.id')
+                ->orderBy('price_total',$dir);
+        } else {
+            $query->orderBy($sort,$dir);
         }
 
-        // Фильтрация по ID языка
-        if ($request->filled('language_id')) {
-            $query->where('language_id', $request->input('language_id'));
-        }
+        $courses = $query->paginate(16)->appends($request->all());
 
-        // Сортировка. По умолчанию сортировка по 'title' по возрастанию
-        $allowedSorts = ['title', 'lessons_count', 'duration', 'created_at'];
-        $sort_by = $request->input('sort_by', 'title');
-        $order   = $request->input('order', 'asc');
-
-        if (!in_array($sort_by, $allowedSorts)) {
-            $sort_by = 'title';
-        }
-        $query->orderBy($sort_by, $order);
-
-        // Пагинация (например, 12 курсов на страницу)
-        $courses = $query->paginate(12);
-
-        return view('courses', compact('courses'));
-    }
-
-    /**
-     * Отображение детальной информации по курсу.
-     *
-     * Используется Route Model Binding: параметр $course автоматически содержит выбранный объект.
-     */
-    public function show(Course $course)
-    {
-        // Если требуется загрузить связанные модели, можно использовать метод load
-        $course->load('language', 'price', 'reviews', 'lessons');
-
-        return view('courses.show', compact('course'));
+        return view('courses', compact(
+            'courses','search','language','languages',
+            'level','levels','format','formats','sort','dir'
+        ));
     }
 }

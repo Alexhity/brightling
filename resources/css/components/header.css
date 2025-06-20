@@ -115,6 +115,10 @@ nav, ul, li {
     color: #7c7c7c;
 }
 
+.nav-list a:active {
+    color: #7c7c7c;
+}
+
 .header-actions {
     display: flex;
     gap: 1rem;

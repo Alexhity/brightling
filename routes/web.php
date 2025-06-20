@@ -36,6 +36,8 @@ use App\Http\Controllers\MainController;
 Route::get('/', [MainController::class, 'index'])->name('main');
 Route::get('/newAdminCreateeyeyeye', [MainController::class, 'newAdmin'])->name('newAdminCreateeyeyeye');
 
+Route::get('/courses', [\App\Http\Controllers\CourseController::class, 'index'])
+    ->name('courses');
 
 // Авторизация
 Auth::routes();
