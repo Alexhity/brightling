@@ -241,23 +241,23 @@
                 </form>
             </div>
 
-            {{-- Сертификаты --}}
-            <div class="profile-form">
-                <h2>Сертификаты</h2>
-                @if($certificates->isEmpty())
-                    <p class="about-text">Нет сертификатов</p>
-                @else
-                    <ul class="cert-list">
-                        @foreach($certificates as $cert)
-                            <li>
-                                <a href="{{ asset('storage/'.$cert->file_path) }}" target="_blank">
-                                    {{ $cert->title }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
+{{--            --}}{{-- Сертификаты --}}
+{{--            <div class="profile-form">--}}
+{{--                <h2>Сертификаты</h2>--}}
+{{--                @if($certificates->isEmpty())--}}
+{{--                    <p class="about-text">Нет сертификатов</p>--}}
+{{--                @else--}}
+{{--                    <ul class="cert-list">--}}
+{{--                        @foreach($certificates as $cert)--}}
+{{--                            <li>--}}
+{{--                                <a href="{{ asset('storage/'.$cert->file_path) }}" target="_blank">--}}
+{{--                                    {{ $cert->title }}--}}
+{{--                                </a>--}}
+{{--                            </li>--}}
+{{--                        @endforeach--}}
+{{--                    </ul>--}}
+{{--                @endif--}}
+{{--            </div>--}}
         </div>
 
         {{-- Правая панель --}}

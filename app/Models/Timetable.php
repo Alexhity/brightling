@@ -49,6 +49,11 @@ class Timetable extends Model
         ];
     }
 
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
     public function isTestLesson()
     {
         return $this->type === self::TYPE_TEST;

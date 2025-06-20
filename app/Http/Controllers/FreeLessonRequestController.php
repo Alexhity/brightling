@@ -64,7 +64,7 @@ class FreeLessonRequestController extends Controller
     // Создание профиля
     public function createProfile(Request $request, $id)
     {
-        set_time_limit(0);
+//        set_time_limit(0);
         // Получаем заявку по ID
         $application = FreeLessonRequest::findOrFail($id);
 

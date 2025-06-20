@@ -18,8 +18,9 @@
             gap: 12px;
             margin-bottom: 30px;
             flex-wrap: wrap;
-            width: 100%; /* совпадает с шириной таблицы */
-            font-size: 16px;
+            /* убираем width: 100%; */
+            /* делаем так, чтобы он равнялся контейнеру */
+            width: 100%;  /* при условии, что родитель .admin-content-wrapper равен таблице */
         }
         .filter-bar input,
         .filter-bar select {
@@ -126,16 +127,16 @@
             align-items: center;
             margin-bottom: 20px;
         }
-        .btn-create {
+        btn-create {
             display: inline-flex;
             align-items: center;
-            background: #8986FF;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 4px;
+            padding: 10px 16px;           /* новое значение */
+            background-color: #e6e2f8;    /* новый фон */
+            color: black;                 /* новый цвет текста */
+            text-decoration: none;
+            border-radius: 7px;
             font-family: 'Montserrat SemiBold', sans-serif;
             font-size: 16px;
-            text-decoration: none;
             transition: transform 0.2s;
         }
         .btn-create:hover {

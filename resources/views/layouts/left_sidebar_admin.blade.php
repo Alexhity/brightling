@@ -155,12 +155,12 @@
                     </a>
                 </li>
 
-                <li>
-                    <a href="{{ route('admin.certificates.create') }}"
-                       class="{{ request()->routeIs('admin.certificates.create') ? 'active' : '' }}">
-                        Сертификаты
-                    </a>
-                </li>
+{{--                <li>--}}
+{{--                    <a href="{{ route('admin.certificates.create') }}"--}}
+{{--                       class="{{ request()->routeIs('admin.certificates.create') ? 'active' : '' }}">--}}
+{{--                        Сертификаты--}}
+{{--                    </a>--}}
+{{--                </li>--}}
 
             </ul>
         </div>

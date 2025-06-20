@@ -2020,9 +2020,11 @@
                         src="{{ asset('images/tutor3.jpg') }}"
                         alt="Учитель 3">
                 </div>
-                <div class="button-container">
-                    <button class="button">Наши преподаватели</button>
-                </div>
+
+                <button class="button"
+                        onclick="window.location='{{ route('teachers') }}'">
+                    Наши преподаватели
+                </button>
             </div>
 
             <div class="teacher-section">
@@ -2053,37 +2055,47 @@
                     <ul class="features">
                         <li class="feature available">Доступ к онлайн-платформе</li>
                         <li class="feature available">Проверка домашнего задания</li>
-                        <li class="feature available">Длительность занятия - 50 минут</li>
+                        <li class="feature available">Длительность занятия - 60 минут</li>
                         <li class="feature available">Персональный план обучения</li>
                         <li class="feature available">Индивидуальные занятия</li>
                     </ul>
                     <p class="price">От 40 рублей/урок</p>
-                    <button class="learn-more">Узнать подробнее</button>
+                    <button class="learn-more"
+                            onclick="window.location='{{ route('prices') }}'">
+                        Узнать подробнее
+                    </button>
+                </div>
+                <div class="card">
+                    <h3>Занятия в паре с другим участником</h3>
+                    <ul class="features">
+                        <li class="feature available">Доступ к онлайн-платформе</li>
+                        <li class="feature available">Проверка домашнего задания</li>
+                        <li class="feature available">Длительность занятия - 60 минут</li>
+                        <li class="feature available">Персональный план обучения</li>
+                        <li class="feature unavailable">Индивидуальные занятия</li>
+                    </ul>
+                    <p class="price">От 30 рублей/урок</p>
+                    <button class="learn-more"
+                            onclick="window.location='{{ route('prices') }}'">
+                        Узнать подробнее
+                    </button>
                 </div>
                 <div class="card">
                     <h3>Занятие в группе с участниками</h3>
                     <ul class="features">
                         <li class="feature available">Доступ к онлайн-платформе</li>
                         <li class="feature available">Проверка домашнего задания</li>
-                        <li class="feature available">Длительность занятия - 50 минут</li>
+                        <li class="feature available">Длительность занятия - 60 минут</li>
                         <li class="feature unavailable">Персональный план обучения</li>
                         <li class="feature unavailable">Индивидуальные занятия</li>
                     </ul>
                     <p class="price">От 25 рублей/урок</p>
-                    <button class="learn-more">Узнать подробнее</button>
+                    <button class="learn-more"
+                            onclick="window.location='{{ route('prices') }}'">
+                        Узнать подробнее
+                    </button>
                 </div>
-                <div class="card">
-                    <h3>Самостоятельное обучение</h3>
-                    <ul class="features">
-                        <li class="feature available">Доступ к онлайн-платформе</li>
-                        <li class="feature unavailable">Проверка домашнего задания</li>
-                        <li class="feature unavailable">Длительность занятия - 50 минут</li>
-                        <li class="feature unavailable">Персональный план обучения</li>
-                        <li class="feature unavailable">Индивидуальные занятия</li>
-                    </ul>
-                    <p class="price">От 70 рублей/месяц</p>
-                    <button class="learn-more">Узнать подробнее</button>
-                </div>
+
             </div>
         </div>
     </section>
