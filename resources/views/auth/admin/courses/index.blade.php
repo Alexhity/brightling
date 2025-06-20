@@ -127,7 +127,7 @@
             align-items: center;
             margin-bottom: 20px;
         }
-        btn-create {
+        .btn-create {
             display: inline-flex;
             align-items: center;
             padding: 10px 16px;           /* новое значение */

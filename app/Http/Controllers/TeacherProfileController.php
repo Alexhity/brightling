@@ -45,7 +45,7 @@ class TeacherProfileController extends Controller
             // Перемещаем в public/images/profile
             $file->move(public_path('images/profile'), $filename);
             // Сохраняем путь относительно public
-            $data['file_path'] = 'images/profile/' . $filename;
+            $data['file_path'] = $filename;
         }
         $user->update($data);
         if (!empty($data['languages'])) {

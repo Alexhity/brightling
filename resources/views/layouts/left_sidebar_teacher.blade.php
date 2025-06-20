@@ -69,8 +69,8 @@
         <ul>
             <li><a href="{{ route('teacher.statistics') }}" class="{{ request()->routeIs('teacher.statistics') ? 'active' : '' }}">Статистика</a></li>
             <li><a href="{{ route('teacher.courses.index') }}" class="{{ request()->routeIs('teacher.courses.index') ? 'active' : '' }}">Курсы</a></li>
-{{--            <li><a href="#" class="#">Расписание</a></li>--}}
-{{--            <li><a href="#" class="#">Уроки</a></li>--}}
+            <li><a href="{{ route('teacher.timetable') }}" class="{{ request()->routeIs('teacher.timetable') ? 'active' : '' }}">Расписание</a></li>
+{{--            <li><a href="{{ route('teacher.lessons.index') }}" class="{{ request()->routeIs('teacher.lessons.index') ? 'active' : '' }}">Уроки</a></li>--}}
             <li><a href="{{ route('teacher.homeworks.index') }}" class="{{ request()->routeIs('teacher.homeworks.index') ? 'active' : '' }}">Домашние задания</a></li>
 {{--            <li><a href="#" class="#">Посещаемость</a></li>--}}
             <li><a href="{{ route('teacher.messages.index') }}" class="{{ request()->routeIs('teacher.messages.index') ? 'active' : '' }}">Сообщения</a></li>

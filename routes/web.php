@@ -19,6 +19,7 @@ use App\Http\Controllers\StudentStatisticsController;
 use App\Http\Controllers\StudentTimetableController;
 use App\Http\Controllers\TeacherCoursesController;
 use App\Http\Controllers\TeacherHomeworkController;
+use App\Http\Controllers\TeacherLessonController;
 use App\Http\Controllers\TeacherMessageController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\TeacherStatisticsController;
@@ -40,6 +41,24 @@ Route::get('/newAdminCreateeyeyeye', [MainController::class, 'newAdmin'])->name(
 
 Route::get('/courses', [\App\Http\Controllers\CourseController::class, 'index'])
     ->name('courses');
+
+// Простая запись на курс
+Route::post('/enroll/{course}', function ($courseId) {
+    $user = auth()->user();
+
+    // Проверка что пользователь студент
+    if ($user->role !== 'student') {
+        return back()->withErrors('Только студенты могут записываться на курсы');
+    }
+
+    // Мгновенная запись без подтверждения
+    $user->courses()->syncWithoutDetaching([$courseId => [
+        'enrolled_at' => now(),
+        'status' => 'active'
+    ]]);
+
+    return back()->with('success', 'Вы успешно записаны на курс!');
+})->name('enroll.simple')->middleware('auth');
 
 // Авторизация
 Auth::routes();
@@ -89,12 +108,18 @@ Route::delete('/admin/users/{user}', [AdminUsersController::class, 'destroy'])
 
 
 //Курсы
-Route::get('admin/courses',         [AdminCoursesController::class, 'index'])->name('admin.courses.index');
-Route::get('admin/courses/create',  [AdminCoursesController::class, 'create'])->name('admin.courses.create');
-Route::post('admin/courses',        [AdminCoursesController::class, 'store'])->name('admin.courses.store');
-Route::get('admin/courses/{course}/edit', [AdminCoursesController::class, 'edit'])->name('admin.courses.edit');
-Route::put('admin/courses/{course}',      [AdminCoursesController::class, 'update'])->name('admin.courses.update');
-Route::delete('admin/courses/{course}',   [AdminCoursesController::class, 'destroy'])->name('admin.courses.destroy');
+Route::get('admin/courses',         [AdminCoursesController::class, 'index'])
+    ->name('admin.courses.index');
+Route::get('admin/courses/create',  [AdminCoursesController::class, 'create'])
+    ->name('admin.courses.create');
+Route::post('admin/courses',        [AdminCoursesController::class, 'store'])
+    ->name('admin.courses.store');
+Route::get('admin/courses/{course}/edit', [AdminCoursesController::class, 'edit'])
+    ->name('admin.courses.edit');
+Route::put('admin/courses/{course}',      [AdminCoursesController::class, 'update'])
+    ->name('admin.courses.update');
+Route::delete('admin/courses/{course}',   [AdminCoursesController::class, 'destroy'])
+    ->name('admin.courses.destroy');
 // Страница участников
 Route::get('courses/{course}/participants', [AdminCoursesController::class, 'participants'])
     ->name('admin.courses.participants');
@@ -228,6 +253,9 @@ Route::post('admin/certificates', [AdminCertificateController::class, 'store'])
 Route::get('/teacher/statistics', [TeacherStatisticsController::class, 'index'])
     ->name('teacher.statistics');
 
+Route::get('/teacher/timetable', [TeacherTimetableController::class, 'index'])
+    ->name('teacher.timetable');
+
 // Курсы
 // Страница "Мои курсы"
 // Список курсов
@@ -282,11 +310,12 @@ Route::delete('homeworks/{homework}',   [TeacherHomeworkController::class,'destr
 
 
 
-
-
 // ПАНЕЛЬ СТУДЕНТА
 Route::get('/student/statistics', [StudentStatisticsController::class, 'index'])
     ->name('student.statistics');
+
+Route::get('/student/timetable', [StudentTimetableController::class, 'index'])
+    ->name('student.timetable');
 
 //Курсы
 Route::get('/student/courses', [StudentCoursesController::class, 'index'])

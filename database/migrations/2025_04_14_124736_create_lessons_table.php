@@ -27,6 +27,10 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('timetables')
                 ->nullOnDelete();
+            $table->foreignId('teacher_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('SET NULL');
         });
 
     }

@@ -12,14 +12,14 @@ class StudentHomeworkController extends Controller
      */
     public function studentIndex()
     {
-        $userId = auth()->id();
+        $user = auth()->user();
 
-        $homeworks = Homework::with('lesson.course')
-            ->whereHas('lesson.users', function($q) use($userId) {
-                $q->where('users.id', $userId)
-                    ->where('users.role', 'student');
-            })
-            ->orderBy('deadline','asc')
+        // Получаем домашние задания для курсов, на которые записан студент
+        $homeworks = Homework::whereHas('lesson.course.students', function($query) use ($user) {
+            $query->where('users.id', $user->id);
+        })
+            ->with('lesson.course') // Жадная загрузка
+            ->orderBy('deadline', 'asc')
             ->get();
 
         return view('auth.student.homeworks', compact('homeworks'));

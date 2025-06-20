@@ -265,7 +265,7 @@
             <div class="sidebar-section">
                 <h2>Аватар</h2>
                 @if($user->file_path)
-                    <img src="{{ asset('storage/'.$user->file_path) }}"
+                    <img src="{{ asset('images/profile/'.$user->file_path) }}"
                          alt="Avatar" class="avatar-preview">
                 @else
                     <p class="about-text">Нет фото</p>

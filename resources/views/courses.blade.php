@@ -459,11 +459,11 @@
 
                     // 2.3 Проверяем язык
                     if (!userLangs.includes(courseLang)) {
-                        return Swal.fire('Язык курса не совпадает', '', 'error');
+                        return Swal.fire('Язык курса не совпадает с изучаемым вами', '', 'error');
                     }
                     // 2.4 Проверяем уровень
                     if (levelsOrder.indexOf(userLevel) < levelsOrder.indexOf(courseLevel)) {
-                        return Swal.fire('Ваш уровень ниже требуемого', '', 'error');
+                        return Swal.fire('Ваш уровень не подходит под данный курс', '', 'error');
                     }
 
                     // 3. Подтверждаем запись через Swal

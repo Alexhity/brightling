@@ -59,5 +59,6 @@ class Kernel extends HttpKernel
         // Регистрация пользовательского middleware для проверки ролей:
         'role' => \App\Http\Middleware\CheckRole::class,
 
+
     ];
 }

@@ -163,6 +163,7 @@ class AdminCoursesController extends Controller
         // Теперь вызываем валидацию
         $data = $request->validate($rules);
 
+
         // Обновляем курс
         $course->update([
             'title'         => $data['title'],
@@ -184,10 +185,12 @@ class AdminCoursesController extends Controller
         // Удаляем те, что были удалены в форме
         $course->timetables()->whereNotIn('id', $ids)->delete();
 
+        logger()->info(json_encode(count($incoming)));
         // Обновляем и создаём слоты
         foreach ($incoming as $slot) {
             $slot['active'] = !empty($slot['active']);
             if (!empty($slot['id'])) {
+                logger()->info(json_encode(1));
                 \App\Models\Timetable::find($slot['id'])->update([
                     'weekday'    => $slot['weekday'] ?? null,
                     'date'       => $slot['date'] ?? null,
@@ -198,6 +201,7 @@ class AdminCoursesController extends Controller
                     'active'     => $slot['active'],
                 ]);
             } else {
+                dd();
                 $course->timetables()->create([
                     'weekday'    => $slot['weekday'] ?? null,
                     'date'       => $slot['date'] ?? null,
@@ -209,6 +213,7 @@ class AdminCoursesController extends Controller
                 ]);
             }
         }
+
 
         return redirect()->route('admin.courses.index')
             ->with('success', "Курс «{$course->title}» успешно обновлён.");

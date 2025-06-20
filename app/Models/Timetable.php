@@ -49,6 +49,35 @@ class Timetable extends Model
         ];
     }
 
+    public function scopeInWeek($q, Carbon $startOfWeek, Carbon $endOfWeek)
+    {
+        return $q->where(function($q) use($startOfWeek, $endOfWeek) {
+            // одноразовые
+            $q->whereNotNull('date')
+                ->whereBetween('date', [$startOfWeek, $endOfWeek])
+                // регулярные
+                ->orWhere(function($q2) use($startOfWeek, $endOfWeek) {
+                    $q2->whereNull('date')
+                        ->whereHas('course', fn($qc) => $qc
+                            ->where('created_at','<=',$endOfWeek)
+                            ->where(fn($q3) => $q3->whereNull('duration')
+                                ->orWhere('duration','>=',$startOfWeek))
+                        );
+                });
+        })
+            ->whereDoesntHave('exceptions', fn($q) =>
+            $q->whereBetween('date', [$startOfWeek,$endOfWeek])
+            )
+            ->orWhereHas('parent', fn($q) =>
+            $q->whereBetween('date', [$startOfWeek,$endOfWeek])
+            );
+    }
+
+    public function scopeActive($q)
+    {
+        return $q->where('active', true)->where('cancelled', false);
+    }
+
     public function children()
     {
         return $this->hasMany(self::class, 'parent_id');

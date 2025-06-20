@@ -63,4 +63,27 @@ class CourseController extends Controller
             'level','levels','format','formats','sort','dir'
         ));
     }
+
+    public function enroll(Request $request)
+    {
+        $request->validate([
+            'course_id' => 'required|exists:courses,id'
+        ]);
+
+        $user = auth()->user();
+        $courseId = $request->course_id;
+
+        // Проверка дублирования записи
+        if ($user->courses()->where('course_id', $courseId)->exists()) {
+            return back()->withErrors('Вы уже записаны на этот курс');
+        }
+
+        // Создание записи
+        $user->courses()->attach($courseId, [
+            'enrolled_at' => now(),
+            'status' => 'active'
+        ]);
+
+        return back()->with('success', 'Вы успешно записаны на курс!');
+    }
 }

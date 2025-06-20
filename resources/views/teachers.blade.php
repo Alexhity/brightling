@@ -240,7 +240,7 @@
             @forelse($teachers as $teacher)
                 <div class="teacher-card">
                     <img
-                        src="{{ $teacher->file_path ? asset($teacher->file_path) : asset('images/default-avatar.png') }}"
+                        src="{{ asset('images/profile/' . $teacher->file_path) }}"
                         alt="{{ $teacher->first_name }}"
                         class="teacher-avatar">
                     <div class="teacher-info">

@@ -31,8 +31,16 @@ class Course extends Model
         'duration'   => 'date',     // приводим к Carbon
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-
     ];
+
+    // Проверка активности курса на дату
+    public function isActiveOnDate(Carbon $date)
+    {
+        $afterStart = $this->start_date ? $date->gte($this->start_date) : true;
+        $beforeEnd = $this->end_date ? $date->lte($this->end_date) : true;
+
+        return $afterStart && $beforeEnd;
+    }
 
     public function language()
     {

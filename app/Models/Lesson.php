@@ -7,17 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Lesson extends Model
 {
     protected $fillable = [
-        'zoom_link',
-        'date',
-        'time',
-        'status',
-        'mark',
-        'course_id',
-    ];
+    'zoom_link', 'date', 'start_time', 'topic',
+    'course_id', 'teacher_id', 'attendance'
+];
 
     protected $casts = [
-        'date'      => 'date',      // автоматически как Carbon с нулёвым временем
-        'start_time'=> 'datetime:H:i', // если нужно, см. заметку ниже
+        'attendance' => 'array',
+        'date' => 'date',
+        'start_time' => 'datetime:H:i'
     ];
 
     public function course()
