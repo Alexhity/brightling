@@ -15,6 +15,11 @@ class Lesson extends Model
         'course_id',
     ];
 
+    protected $casts = [
+        'date'      => 'date',      // автоматически как Carbon с нулёвым временем
+        'start_time'=> 'datetime:H:i', // если нужно, см. заметку ниже
+    ];
+
     public function course()
     {
         return $this->belongsTo(Course::class, 'course_id');
@@ -24,7 +29,7 @@ class Lesson extends Model
     {
         return $this->belongsToMany(
             User::class,
-            'user_lessons',
+            'lesson_user',
             'lesson_id',
             'user_id'
         )->withTimestamps();

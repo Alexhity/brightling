@@ -11,12 +11,14 @@ use App\Http\Controllers\AdminTimetableController;
 use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\StudentCoursesController;
+use App\Http\Controllers\StudentHomeworkController;
 use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\StudentReviewsController;
 use App\Http\Controllers\StudentStatisticsController;
 use App\Http\Controllers\StudentTimetableController;
 use App\Http\Controllers\TeacherCoursesController;
+use App\Http\Controllers\TeacherHomeworkController;
 use App\Http\Controllers\TeacherMessageController;
 use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\TeacherStatisticsController;
@@ -43,6 +45,12 @@ Route::get('/courses', [\App\Http\Controllers\CourseController::class, 'index'])
 Auth::routes();
 
 Route::get('/about-school', [AboutSchoolController::class, 'index'])->name('about.school');
+
+Route::get('/teachers', [App\Http\Controllers\TeacherController::class, 'index'])
+    ->name('teachers');
+
+Route::get('/prices', [App\Http\Controllers\PriceController::class, 'index'])
+    ->name('prices');
 
 
 
@@ -259,7 +267,18 @@ Route::get('teacher/messages/{message}', [TeacherMessageController::class, 'show
 Route::patch('teacher/messages/{message}', [TeacherMessageController::class, 'reply'])
     ->name('teacher.messages.reply');
 
-
+Route::get('teacher/homeworks', [App\Http\Controllers\TeacherHomeworkController::class,'index'])
+    ->name('teacher.homeworks.index');
+Route::get('teacher/homeworks/create', [App\Http\Controllers\TeacherHomeworkController::class,'create'])
+    ->name('teacher.homeworks.create');
+Route::post('teacher/homeworks', [App\Http\Controllers\TeacherHomeworkController::class,'store'])
+    ->name('teacher.homeworks.store');
+Route::get('teacher/homeworks/{homework}/edit', [App\Http\Controllers\TeacherHomeworkController::class,'edit'])
+    ->name('teacher.homeworks.edit');
+Route::put('teacher/homeworks/{homework}', [TeacherHomeworkController::class,'update'])
+    ->name('teacher.homeworks.update');
+Route::delete('homeworks/{homework}',   [TeacherHomeworkController::class,'destroy'])
+    ->name('teacher.homeworks.destroy');
 
 
 
@@ -304,7 +323,9 @@ Route::get('student.messages/{message}', [StudentMessageController::class,'show'
 Route::patch('student/messages/{message}', [StudentMessageController::class,'reply'])
     ->name('student.messages.reply');
 
-
+//
+Route::get('student/homeworks', [StudentHomeworkController::class, 'studentIndex'])
+    ->name('student.homeworks');
 
 
 

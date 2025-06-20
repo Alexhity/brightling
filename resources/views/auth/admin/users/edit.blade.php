@@ -122,6 +122,8 @@
             font-size: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+        .required::after { content: " *"; color: #ff4c4c; }
+        .optional::after { content: " (необязательно)"; color: #999; font-weight: normal; font-size: 0.9em; }
     </style>
 @endsection
 
@@ -138,39 +140,66 @@
             @csrf
             @method('PUT')
 
+            {{-- Имя --}}
             <div class="form-group">
-                <label for="first_name">Имя</label>
-                <input id="first_name" name="first_name" type="text" value="{{ old('first_name', $user->first_name) }}" required class="{{ $errors->has('first_name') ? 'input-error' : '' }}">
-                @if($errors->has('first_name'))<div class="error">{{ $errors->first('first_name') }}</div>@endif
+                <label for="first_name" class="required">Имя</label>
+                <input id="first_name" name="first_name" type="text"
+                       value="{{ old('first_name', $user->first_name) }}" required
+                       class="{{ $errors->has('first_name') ? 'input-error' : '' }}">
+                @if($errors->has('first_name'))
+                    <div class="error">Введите имя</div>
+                @endif
             </div>
 
+            {{-- Фамилия --}}
             <div class="form-group">
-                <label for="last_name">Фамилия</label>
-                <input id="last_name" name="last_name" type="text" value="{{ old('last_name', $user->last_name) }}" required class="{{ $errors->has('last_name') ? 'input-error' : '' }}">
-                @if($errors->has('last_name'))<div class="error">{{ $errors->first('last_name') }}</div>@endif
+                <label for="last_name" class="optional">Фамилия</label>
+                <input id="last_name" name="last_name" type="text"
+                       value="{{ old('last_name', $user->last_name) }}"
+                       class="{{ $errors->has('last_name') ? 'input-error' : '' }}">
+                @if($errors->has('last_name'))
+                    <div class="error">Введите фамилию</div>
+                @endif
             </div>
 
+            {{-- Email --}}
             <div class="form-group">
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required class="{{ $errors->has('email') ? 'input-error' : '' }}">
-                @if($errors->has('email'))<div class="error">{{ $errors->first('email') }}</div>@endif
+                <label for="email" class="required">Email</label>
+                <input id="email" name="email" type="email"
+                       value="{{ old('email', $user->email) }}" required
+                       class="{{ $errors->has('email') ? 'input-error' : '' }}">
+                @if($errors->has('email'))
+                    <div class="error">Введите email</div>
+                @endif
             </div>
 
+            {{-- Телефон --}}
             <div class="form-group">
-                <label for="phone">Телефон</label>
-                <input id="phone" name="phone" type="text" value="{{ old('phone', $user->phone) }}" class="{{ $errors->has('phone') ? 'input-error' : '' }}">
-                @if($errors->has('phone'))<div class="error">{{ $errors->first('phone') }}</div>@endif
+                <label for="phone" class="required">Телефон</label>
+                <input id="phone" name="phone" type="text"
+                       value="{{ old('phone', $user->phone) }}" required
+                       class="{{ $errors->has('phone') ? 'input-error' : '' }}">
+                @if($errors->has('phone'))
+                    <div class="error">Введите номер телефона</div>
+                @endif
             </div>
 
+            {{-- Дата рождения --}}
             <div class="form-group">
-                <label for="date_birthday">Дата рождения</label>
-                <input id="date_birthday" name="date_birthday" type="date" value="{{ old('date_birthday', $user->date_birthday) }}" class="{{ $errors->has('date_birthday') ? 'input-error' : '' }}">
-                @if($errors->has('date_birthday'))<div class="error">{{ $errors->first('date_birthday') }}</div>@endif
+                <label for="date_birthday" class="optional">Дата рождения</label>
+                <input id="date_birthday" name="date_birthday" type="date"
+                       value="{{ old('date_birthday', $user->date_birthday) }}"
+                       class="{{ $errors->has('date_birthday') ? 'input-error' : '' }}">
+                @if($errors->has('date_birthday'))
+                    <div class="error">{{ $errors->first('date_birthday') }}</div>
+                @endif
             </div>
 
+            {{-- Уровень --}}
             <div class="form-group">
-                <label for="level">Уровень</label>
-                <select id="level" name="level" required class="{{ $errors->has('level') ? 'input-error' : '' }}">
+                <label for="level" class="optional">Уровень</label>
+                <select id="level" name="level"
+                        class="{{ $errors->has('level') ? 'input-error' : '' }}">
                     <option value="" disabled {{ old('level', $user->level) ? '' : 'selected' }}>Выберите уровень</option>
                     @foreach(['beginner','A1','A2','B1','B2','C1','C2'] as $lvl)
                         <option value="{{ $lvl }}" {{ old('level', $user->level)==$lvl ? 'selected' : '' }}>
@@ -183,22 +212,29 @@
                 @endif
             </div>
 
-
+            {{-- Описание --}}
             <div class="form-group">
-                <label for="description">Описание</label>
-                <textarea id="description" name="description" rows="4" class="{{ $errors->has('description') ? 'input-error' : '' }}">{{ old('description', $user->description) }}</textarea>
-                @if($errors->has('description'))<div class="error">{{ $errors->first('description') }}</div>@endif
+                <label for="description" class="optional">Описание</label>
+                <textarea id="description" name="description" rows="4"
+                          class="{{ $errors->has('description') ? 'input-error' : '' }}">{{ old('description', $user->description) }}</textarea>
+                @if($errors->has('description'))
+                    <div class="error">{{ $errors->first('description') }}</div>
+                @endif
             </div>
 
+            {{-- Роль --}}
             <div class="form-group">
-                <label for="role">Роль</label>
-                <select id="role" name="role" required class="{{ $errors->has('role') ? 'input-error' : '' }}">
+                <label for="role" class="required">Роль</label>
+                <select id="role" name="role" required
+                        class="{{ $errors->has('role') ? 'input-error' : '' }}">
                     <option value="" disabled {{ old('role', $user->role) ? '' : 'selected' }}>Выберите роль</option>
                     <option value="student" {{ old('role', $user->role)=='student' ? 'selected' : '' }}>Студент</option>
                     <option value="teacher" {{ old('role', $user->role)=='teacher' ? 'selected' : '' }}>Учитель</option>
                     <option value="admin" {{ old('role', $user->role)=='admin' ? 'selected' : '' }}>Администратор</option>
                 </select>
-                @if($errors->has('role'))<div class="error">{{ $errors->first('role') }}</div>@endif
+                @if($errors->has('role'))
+                    <div class="error">{{ $errors->first('role') }}</div>
+                @endif
             </div>
 
             <div class="buttons">

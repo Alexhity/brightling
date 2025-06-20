@@ -12,10 +12,10 @@ use Illuminate\Http\Request;
 class AdminController extends Controller
 {
     // Защищаем все методы с помощью middleware auth
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+//    public function __construct()
+//    {
+//        $this->middleware('auth');
+//    }
 
     public function dashboard()
     {

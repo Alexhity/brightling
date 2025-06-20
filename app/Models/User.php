@@ -104,10 +104,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(
             Lesson::class,
-            'user_lessons',
-            'user_id',
-            'lesson_id'
-        )->withTimestamps();
+            'lesson_user',   // точно то же имя таблицы
+            'user_id',       // FK для User в pivot
+            'lesson_id'      // FK для Lesson в pivot
+        )->withPivot('role')
+            ->withTimestamps();
     }
 
     public function reviews()

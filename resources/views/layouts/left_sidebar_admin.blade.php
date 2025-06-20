@@ -56,9 +56,33 @@
                 transform: scale(1.04);
             }
 
-            .dashboard-wrapper {
-                display: flex;
+            .content-wrapper {
+                flex:1;
+                margin-left:230px;
+                padding:20px;
             }
+
+            /* кнопка‑гамбургер */
+            .sidebar-toggle {
+                display:none;
+                position:fixed;
+                top:15px;
+                left:15px;
+                width:36px;
+                height:36px;
+                background:#8986FF;
+                border:none;
+                border-radius:4px;
+                color:#fff;
+                font-size:24px;
+                align-items:center;
+                justify-content:center;
+                z-index:20;
+                cursor:pointer;
+            }
+
+
+        </style>
 
 
         </style>
@@ -109,6 +133,7 @@
                     </a>
                 </li>
 
+
                 <li>
                     <a href="{{ route('admin.languages.index') }}"
                        class="{{ request()->routeIs('admin.languages.index') ? 'active' : '' }}">
@@ -141,5 +166,6 @@
         </div>
     </div>
     @yield('content')
+
     </body>
     </html>

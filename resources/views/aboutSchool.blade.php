@@ -224,6 +224,130 @@
                 grid-template-columns: 1fr;
             }
         }
+
+             /* ========== Десктоп (от 1201px) ========== */
+        @media (min-width: 1201px) {
+            .reviews-cards {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .contacts-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* ========== Большие планшеты / маленькие ноутбуки (992px–1200px) ========== */
+        @media (max-width: 1200px) and (min-width: 993px) {
+            .reviews-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .contacts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ========== Планшеты / ландшафтные смартфоны (768px–992px) ========== */
+        @media (max-width: 992px) and (min-width: 769px) {
+            .reviews-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .contacts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .advantages-section h2 {
+                font-size: 40px;
+                padding-top: 40px;
+                padding-bottom: 40px;
+            }
+            .promo-section h2 {
+                font-size: 28px;
+                margin-bottom: 30px;
+                margin-top: 50px;
+            }
+            .about-text {
+                font-size: 16px;
+            }
+        }
+
+        /* ========== Смартфоны портрет / узкие экраны (max‑width: 768px) ========== */
+        @media (max-width: 768px) {
+            .container1 {
+                display: block;
+                padding: 0 15px;
+            }
+            .reviews-cards,
+            .contacts-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .advantages-section h2 {
+                font-size: 32px;
+                padding-top: 30px;
+                padding-bottom: 30px;
+                margin-top: 50px;
+            }
+            .promo-section h2 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            .about-text {
+                font-size: 15px;
+                line-height: 1.5;
+            }
+            .faq-title {
+                font-size: 16px;
+            }
+            .faq-icon {
+                font-size: 20px;
+            }
+            .review-title {
+                font-size: 18px;
+            }
+            .review-body {
+                font-size: 13px;
+            }
+        }
+
+        /* ========== Очень маленькие экраны (max‑width: 480px) ========== */
+        @media (max-width: 480px) {
+            .promo-section {
+                padding: 20px 0;
+            }
+            .advantages-section h2 {
+                font-size: 28px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                margin-top: 120px;
+            }
+            .promo-section h2 {
+                font-size: 20px;
+                margin-bottom: 15px;
+
+            }
+            .about-text {
+                font-size: 14px;
+            }
+            .faq-question {
+                padding: 12px 0;
+            }
+            .faq-title {
+                font-size: 15px;
+            }
+            .faq-icon {
+                font-size: 18px;
+            }
+            .filter-bar {
+                gap: 8px;
+            }
+            .filter-bar input,
+            .filter-bar select,
+            .filter-bar .sort-btn,
+            .filter-bar .btn,
+            .filter-bar .btn-reset {
+                flex: 1 1 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+
     </style>
 @endsection
 

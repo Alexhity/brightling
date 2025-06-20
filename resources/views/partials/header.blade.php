@@ -15,8 +15,14 @@
                    class="{{ request()->routeIs('courses') ? 'active' : '' }}">
                     Курсы
                 </a>
-                <li><a href="#teachers">Преподаватели</a></li>
-                <li><a href="#pricing">Стоимость</a></li>
+                <a href="{{ route('teachers') }}"
+                   class="{{ request()->routeIs('teachers') ? 'active' : '' }}">
+                    Преподаватели
+                </a>
+                <a href="{{ route('prices') }}"
+                   class="{{ request()->routeIs('prices') ? 'active' : '' }}">
+                    Стоимость
+                </a>
                 <li class="nav-item nav-item--dropdown">
                     <a href="{{ route('about.school', ['#faq']) }}" class="nav-link dropdown-toggle">О школе</a>
                     <ul class="dropdown-menu">

@@ -24,9 +24,9 @@ class AdminUsersController extends Controller
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:20',
+            'phone'     => 'required|string|max:20',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|string',
             'level' => 'nullable|string',
@@ -52,9 +52,9 @@ class AdminUsersController extends Controller
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|string',
             'level' => 'nullable|string',

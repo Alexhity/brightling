@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Language;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Course;
@@ -9,11 +10,58 @@ use App\Models\Course;
 
 class TeacherController extends Controller
 {
-    public function __construct()
+    public function index(Request $request)
     {
-        $this->middleware('auth');
-    }
+        $search   = $request->input('search');
+        $language = $request->input('language');
+        $level    = $request->input('level');
 
+        $languages = Language::orderBy('name')->get();
+        $levels    = [
+            'beginner' => 'Начинающий',
+            'A1'       => 'A1',
+            'A2'       => 'A2',
+            'B1'       => 'B1',
+            'B2'       => 'B2',
+            'C1'       => 'C1',
+            'C2'       => 'C2',
+        ];
+
+        $query = User::with(['languages' => function($q) {
+            $q->withPivot('level');
+        }])
+            ->where('role', 'teacher');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name',  'like', "%{$search}%");
+            });
+        }
+
+        if ($language) {
+            $query->whereHas('languages', function($q) use ($language) {
+                $q->where('language_id', $language);
+            });
+        }
+
+        if ($level) {
+            $query->whereHas('languages', function($q) use ($level) {
+                $q->wherePivot('level', $level);
+            });
+        }
+
+        $teachers = $query->paginate(12)->appends($request->all());
+
+        return view('teachers', compact(
+            'teachers',
+            'search',
+            'language',
+            'languages',
+            'level',
+            'levels'
+        ));
+    }
     public function dashboard()
     {
 //        $courses = $teacher->taughtCourses()->withCount('students')->get();

@@ -17,14 +17,19 @@
             height: 100vh;
             background-color: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            padding: 20px;
-            overflow-y: auto;
-            padding-top: 130px;
+            padding: 20px ;
+            /*overflow-y: auto;*/
+            padding-top: 107px;
+            overflow-x: visible;
+            z-index: 10;
         }
         .sidebar-navigation ul {
             list-style: none;
             padding: 0;
             margin: 0;
+        }
+        .sidebar-navigation ul li {
+            position: relative;
         }
         .sidebar-navigation ul li a {
             text-decoration: none;
@@ -34,19 +39,21 @@
             transition: all 0.2s ease-in-out;
             padding: 10px;
             display: block;
-            border-radius: 5px;
+            border-radius: 7px;
+            margin-bottom: 8px;
         }
 
         .sidebar-navigation ul li a:hover {
             background-color: #8986FF;
             color: white;
-            transform: scale(1.05);
+            transform: scale(1.04);
+
         }
 
         .sidebar-navigation ul li a.active {
             background-color: #8986FF; /* Фиолетовый фон */
             color: white;
-            transform: scale(1.05);
+            transform: scale(1.04);
         }
 
         .dashboard-wrapper {
@@ -64,7 +71,7 @@
             <li><a href="{{ route('teacher.courses.index') }}" class="{{ request()->routeIs('teacher.courses.index') ? 'active' : '' }}">Курсы</a></li>
 {{--            <li><a href="#" class="#">Расписание</a></li>--}}
 {{--            <li><a href="#" class="#">Уроки</a></li>--}}
-{{--            <li><a href="#" class="#">Домашние задания</a></li>--}}
+            <li><a href="{{ route('teacher.homeworks.index') }}" class="{{ request()->routeIs('teacher.homeworks.index') ? 'active' : '' }}">Домашние задания</a></li>
 {{--            <li><a href="#" class="#">Посещаемость</a></li>--}}
             <li><a href="{{ route('teacher.messages.index') }}" class="{{ request()->routeIs('teacher.messages.index') ? 'active' : '' }}">Сообщения</a></li>
             <li><a href="{{ route('teacher.profile.edit') }}" class="{{ request()->routeIs('teacher.profile.edit') ? 'active' : '' }}">Профиль</a></li>

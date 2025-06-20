@@ -119,7 +119,6 @@
 
 @section('content')
     @include('layouts.left_sidebar_admin')
-    <h1>TEST STRING</h1>
     <div class="admin-content-wrapper" >
         <div class="header-row" style="">
             <h2>Тарифы</h2>
