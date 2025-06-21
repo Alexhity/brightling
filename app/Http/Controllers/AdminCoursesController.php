@@ -135,6 +135,7 @@ class AdminCoursesController extends Controller
 
     public function update(Request $request, Course $course)
     {
+        logger()->info('slot ');
         // Сначала формируем правила валидации
         $rules = [
             'title'         => 'required|string|max:255',
@@ -159,11 +160,11 @@ class AdminCoursesController extends Controller
             'timetables.*.user_id'   => 'required|exists:users,id',
             'timetables.*.active'    => 'sometimes|boolean',
         ];
-
+        logger()->info('before');
         // Теперь вызываем валидацию
         $data = $request->validate($rules);
 
-
+        logger()->info('after');
         // Обновляем курс
         $course->update([
             'title'         => $data['title'],
@@ -185,12 +186,10 @@ class AdminCoursesController extends Controller
         // Удаляем те, что были удалены в форме
         $course->timetables()->whereNotIn('id', $ids)->delete();
 
-        logger()->info(json_encode(count($incoming)));
         // Обновляем и создаём слоты
         foreach ($incoming as $slot) {
             $slot['active'] = !empty($slot['active']);
             if (!empty($slot['id'])) {
-                logger()->info(json_encode(1));
                 \App\Models\Timetable::find($slot['id'])->update([
                     'weekday'    => $slot['weekday'] ?? null,
                     'date'       => $slot['date'] ?? null,
@@ -201,8 +200,7 @@ class AdminCoursesController extends Controller
                     'active'     => $slot['active'],
                 ]);
             } else {
-                dd();
-                $course->timetables()->create([
+                Timetable::create([
                     'weekday'    => $slot['weekday'] ?? null,
                     'date'       => $slot['date'] ?? null,
                     'start_time' => $slot['start_time'],
@@ -210,7 +208,17 @@ class AdminCoursesController extends Controller
                     'type'       => $slot['type'],
                     'user_id'    => $slot['user_id'],
                     'active'     => $slot['active'],
+                    'course_id' => $course['id']
                 ]);
+//                $course->timetables()->create([
+//                    'weekday'    => $slot['weekday'] ?? null,
+//                    'date'       => $slot['date'] ?? null,
+//                    'start_time' => $slot['start_time'],
+//                    'duration'   => $slot['duration'],
+//                    'type'       => $slot['type'],
+//                    'user_id'    => $slot['user_id'],
+//                    'active'     => $slot['active'],
+//                ]);
             }
         }
 
