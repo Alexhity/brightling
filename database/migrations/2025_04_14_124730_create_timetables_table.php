@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('timetables', function (Blueprint $table) {
             $table->id();
 
+            $table->string('title')->nullable();
+
             // День недели (ENUM, чтобы не было опечаток)
             $table->enum('weekday', [
                 'понедельник', 'вторник', 'среда', 'четверг',
                 'пятница', 'суббота', 'воскресенье'
-            ]);
+            ])->nullable();
 
             // Поле date: для одноразовых слотов
             $table->date('date')->nullable();

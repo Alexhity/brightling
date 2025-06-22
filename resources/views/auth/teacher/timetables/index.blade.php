@@ -182,7 +182,7 @@
                 @foreach ($days as $day)
                     @php
                         $dateKey = $day->toDateString();
-                        $daySlots = $groupedSlots->get($dateKey, []);
+                        $daySlots = $groupedSlots->get($dateKey, [])
                     @endphp
 
                     <td>

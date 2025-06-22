@@ -28,6 +28,7 @@ return new class extends Migration
                 'C1','C2'
             ])
                 ->nullable();
+            $table->string('file_path')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

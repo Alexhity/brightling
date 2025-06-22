@@ -14,7 +14,7 @@ class LessonGenerator
      * @param Timetable $slot
      * @param int $weeks
      */
-    public static function generateForSlot(Timetable $slot, int $weeks = 12): void
+    public static function generateForSlot(Timetable $slot, int $weeks): void
     {
         if (! $slot->active || ! $slot->course_id) {
             return;
@@ -41,6 +41,9 @@ class LessonGenerator
                     'course_id'  => $slot->course_id,
                     'teacher_id' => $slot->instructor->id ?? null,
                     'status'     => 'scheduled',
+                    'date'         => $date,
+                    'timetable_id' => $slot->id,
+                    'time'         => $slot->start_time,
                 ]
             );
         }

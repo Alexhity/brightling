@@ -27,7 +27,7 @@ class TeacherTimetableController extends Controller
             ->where('active', true)
             ->where('cancelled', false)
             ->get();
-
+//dd($slots);
         // Фильтруем слоты по дате курса
         $filteredSlots = $slots->filter(function($slot) use ($startOfWeek) {
             $course = $slot->course;
@@ -57,7 +57,6 @@ class TeacherTimetableController extends Controller
                     'суббота' => Carbon::SATURDAY,
                     'воскресенье' => Carbon::SUNDAY,
                 ];
-
                 if (!isset($weekdayMap[$slot->weekday])) {
                     return false;
                 }
@@ -70,7 +69,7 @@ class TeacherTimetableController extends Controller
                 return $afterStart && $beforeEnd;
             }
         });
-
+//dd($filteredSlots);
         // Группируем слоты по дням
         $groupedSlots = $this->groupSlotsByWeek($filteredSlots, $startOfWeek);
 
