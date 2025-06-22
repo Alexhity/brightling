@@ -106,6 +106,29 @@
             color: #fff;
         }
 
+        .time-period-header {
+            font-weight: bold;
+            padding: 8px 0 4px;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+            color: #555;
+        }
+
+        .slot-morning { background-color: #fff9db; border-left: 3px solid #ffd43b; }
+        .slot-afternoon { background-color: #d3f9d8; border-left: 3px solid #40c057; }
+        .slot-evening { background-color: #e7f5ff; border-left: 3px solid #4dabf7; }
+
+        .slot {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .slot--inactive {
+            opacity: 0.6;
+            background-color: #f8f9fa;
+        }
+
     </style>
 @endsection
 
@@ -162,44 +185,145 @@
                     @php
                         $dateKey = $day->toDateString();
                         $daySlots = $groupedSlots->get($dateKey, collect());
+
+                        // Сортируем слоты по времени
+                        $sortedDaySlots = $daySlots->sortBy(function ($slot) {
+                            return \Carbon\Carbon::parse($slot->start_time);
+                        });
+
+                        // Группируем слоты по времени суток
+                        $morningSlots = [];
+                        $afternoonSlots = [];
+                        $eveningSlots = [];
+
+                        foreach ($sortedDaySlots as $slot) {
+                            $hour = \Carbon\Carbon::parse($slot->start_time)->hour;
+
+                            if ($hour < 12) {
+                                $morningSlots[] = $slot;
+                            } elseif ($hour < 17) {
+                                $afternoonSlots[] = $slot;
+                            } else {
+                                $eveningSlots[] = $slot;
+                            }
+                        }
+
+                        
+
                     @endphp
 
                     <td>
-                        @foreach ($daySlots as $slot)
-                            @php
-                                $isException = $slot->parent_id !== null;
-                                $isCancelled = $slot->cancelled;
-                                $teacher = $slot->overrideTeacher ?: $slot->teacher;
-                                $baseSlot = $isException ? $slot->parent : $slot;
-                            @endphp
+                        {{-- Утренние слоты (до 12:00) --}}
+                        @if (count($morningSlots))
+                            <div class="time-period-header">Утро</div>
+                            @foreach ($morningSlots as $slot)
+                                @php
+                                    // Проверяем существование свойства через isset
+                                    $isException = isset($slot->parent_id) && $slot->parent_id !== null;
+                                    $isCancelled = $slot->cancelled ?? false;
+                                    $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
+                                    $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
+                                @endphp
 
-                            <div class="slot @if(!$slot->active || $isCancelled) slot--inactive @endif">
-                                <div class="slot-header">
-                                    <strong>{{ $baseSlot->course->title ?? $baseSlot->title }}</strong>
-                                    <div>
-                                        @if($isException)
-                                            <span class="slot-status status-modified">Изменено</span>
-                                        @endif
-                                        @if($isCancelled)
-                                            <span class="slot-status status-cancelled">Отменено</span>
-                                        @endif
+                                <div class="slot slot-morning @if(!$slot->active || $isCancelled) slot--inactive @endif">
+                                    <div class="slot-header">
+                                        <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
+                                        <div>
+                                            @if($isException)
+                                                <span class="slot-status status-modified">Изменено</span>
+                                            @endif
+                                            @if($isCancelled)
+                                                <span class="slot-status status-cancelled">Отменено</span>
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div>
-                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
-                                    ({{ $slot->duration }} мин)
-                                </div>
-
-                                @if($teacher)
                                     <div>
-                                        Преподаватель:
-                                        {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
+                                        ({{ $slot->duration }} мин)
                                     </div>
-                                @endif
+                                    @if($teacher)
+                                        <div>
+                                            Преподаватель:
+                                            {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
 
-                            </div>
-                        @endforeach
+                        {{-- Дневные слоты (12:00-17:00) --}}
+                        @if (count($afternoonSlots))
+                            <div class="time-period-header">День</div>
+                            @foreach ($afternoonSlots as $slot)
+                                @php
+                                    $isException = isset($slot->parent_id) && $slot->parent_id !== null;
+                                    $isCancelled = $slot->cancelled ?? false;
+                                    $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
+                                    $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
+                                @endphp
+
+                                <div class="slot slot-afternoon @if(!$slot->active || $isCancelled) slot--inactive @endif">
+                                    <div class="slot-header">
+                                        <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
+                                        <div>
+                                            @if($isException)
+                                                <span class="slot-status status-modified">Изменено</span>
+                                            @endif
+                                            @if($isCancelled)
+                                                <span class="slot-status status-cancelled">Отменено</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
+                                        ({{ $slot->duration }} мин)
+                                    </div>
+                                    @if($teacher)
+                                        <div>
+                                            Преподаватель:
+                                            {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+
+                        {{-- Вечерние слоты (после 17:00) --}}
+                        @if (count($eveningSlots))
+                            <div class="time-period-header">Вечер</div>
+                            @foreach ($eveningSlots as $slot)
+                                @php
+                                    $isException = isset($slot->parent_id) && $slot->parent_id !== null;
+                                    $isCancelled = $slot->cancelled ?? false;
+                                    $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
+                                    $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
+                                @endphp
+
+                                <div class="slot slot-evening @if(!$slot->active || $isCancelled) slot--inactive @endif">
+                                    <div class="slot-header">
+                                        <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
+                                        <div>
+                                            @if($isException)
+                                                <span class="slot-status status-modified">Изменено</span>
+                                            @endif
+                                            @if($isCancelled)
+                                                <span class="slot-status status-cancelled">Отменено</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
+                                        ({{ $slot->duration }} мин)
+                                    </div>
+                                    @if($teacher)
+                                        <div>
+                                            Преподаватель:
+                                            {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
                     </td>
                 @endforeach
             </tr>

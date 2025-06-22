@@ -1,10 +1,11 @@
+@php use Carbon\Carbon; @endphp
 @extends('layouts.app')
 
 @section('styles')
     <style>
         .admin-content-wrapper {
             margin-left: 200px;
-            width: calc(100% - 200px);
+            width: calc(100% - 180px);
             padding: 0 20px;
             font-family: 'Montserrat Medium', sans-serif;
         }
@@ -114,23 +115,38 @@
             padding: 15px 0;
             font-size: 14px;
         }
-        .debug-info {
-            background: #fff3cd;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border-left: 4px solid #ffc107;
-        }
-        .role-info {
-            margin-bottom: 15px;
-            font-size: 16px;
+
+        /* Новые стили для группировки по времени */
+        .time-period-header {
+            font-weight: bold;
+            padding: 8px 0 4px;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
             color: #555;
+        }
+        .slot-morning { background-color: #fff9db; border-left: 3px solid #ffd43b; }
+        .slot-afternoon { background-color: #d3f9d8; border-left: 3px solid #40c057; }
+        .slot-evening { background-color: #e7f5ff; border-left: 3px solid #4dabf7; }
+
+        /* Стиль для кнопки "Текущая неделя" */
+        .btn-current-week {
+            display: inline-block;
+            background: #e6e2f8;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-left: 10px;
         }
     </style>
 @endsection
 
 @section('content')
     @include('layouts.left_sidebar_teacher')
+    @php
+        // В начале секции content
+        $groupedSlots = $groupedSlots ?? collect();
+    @endphp
     <div class="admin-content-wrapper">
         <h2>Мое расписание</h2>
 
@@ -148,8 +164,11 @@
             <a href="{{ route('teacher.timetable', ['week_start' => $startOfWeek->copy()->addWeek()->toDateString()]) }}">
                 Следующая неделя →
             </a>
+            <!-- Добавляем кнопку "Текущая неделя" -->
+            <a href="{{ route('teacher.timetable') }}" class="btn-current-week">
+                Текущая неделя
+            </a>
         </div>
-
 
         <table class="slots-table">
             <thead>
@@ -182,57 +201,62 @@
                 @foreach ($days as $day)
                     @php
                         $dateKey = $day->toDateString();
-                        $daySlots = $groupedSlots->get($dateKey, [])
+                        $daySlots = $groupedSlots->get($dateKey, []);
+
+                        // Группируем слоты по времени суток
+                        $morningSlots = [];
+                        $afternoonSlots = [];
+                        $eveningSlots = [];
+
+                        foreach ($daySlots as $slot) {
+                            $hour = Carbon::parse($slot->start_time)->hour;
+
+                            if ($hour < 12) {
+                                $morningSlots[] = $slot;
+                            } elseif ($hour < 17) {
+                                $afternoonSlots[] = $slot;
+                            } else {
+                                $eveningSlots[] = $slot;
+                            }
+                        }
                     @endphp
 
                     <td>
-                        @forelse($daySlots as $slot)
-                            @php
-                                $isOverride = $slot->override_user_id == $teacher->id;
-                                $isCancelled = $slot->cancelled;
-                            @endphp
+                        @if(count($morningSlots) || count($afternoonSlots) || count($eveningSlots))
+                            @if(count($morningSlots))
+                                <div class="time-period-header">Утро</div>
+                                @foreach($morningSlots as $s)
+                                    @include('auth.teacher.timetables.slot', [
+                                        'slot' => $s,
+                                        'teacher' => $teacher
+                                    ])
+                                @endforeach
+                            @endif
 
-                            <div class="slot @if($isCancelled) slot--inactive @endif">
-                                <div class="slot-header">
-                                        <span class="slot-title">
-                                            {{ $slot->course->title ?? $slot->title }}
-                                        </span>
-                                    @if($isCancelled)
-                                        <span class="slot-status status-cancelled">Отменено</span>
-                                    @endif
-                                </div>
+                            @if(count($afternoonSlots))
+                                <div class="time-period-header">День</div>
+                                @foreach($afternoonSlots as $s)
+                                    @include('auth.teacher.timetables.slot', [
+                                        'slot' => $s,
+                                        'teacher' => $teacher
+                                    ])
+                                @endforeach
+                            @endif
 
-                                <div class="slot-time">
-                                    <strong>{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}</strong>
-                                    ({{ $slot->duration }} мин)
-                                </div>
-
-                                <div class="slot-course">
-                                    @if($slot->course)
-                                        Курс: {{ $slot->course->title }}
-                                    @else
-                                        {{ $slot->title }}
-                                    @endif
-                                </div>
-
-                                <div class="slot-type">
-                                    @if($isOverride)
-                                        <i>(замена)</i>
-                                    @endif
-                                    @if($slot->type === 'group')
-                                        Групповое занятие
-                                    @elseif($slot->type === 'individual')
-                                        Индивидуальное занятие
-                                    @else
-                                        Тестовый урок
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
+                            @if(count($eveningSlots))
+                                <div class="time-period-header">Вечер</div>
+                                @foreach($eveningSlots as $s)
+                                    @include('auth.teacher.timetables.slot', [
+                                        'slot' => $s,
+                                        'teacher' => $teacher
+                                    ])
+                                @endforeach
+                            @endif
+                        @else
                             <div class="slot-empty">
                                 Нет занятий
                             </div>
-                        @endforelse
+                        @endif
                     </td>
                 @endforeach
             </tr>

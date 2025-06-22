@@ -23,7 +23,7 @@ class AdminTimetableController extends Controller
             : Carbon::now()->startOfWeek();
         $endOfWeek = $startOfWeek->copy()->endOfWeek();
 
-        // Получаем только актуальные слоты для отображения
+        // Исправленный запрос для получения слотов
         $slots = Timetable::with(['course', 'teacher', 'overrideTeacher'])
             ->where(function($q) use($startOfWeek, $endOfWeek) {
                 // Разовые слоты в текущей неделе
@@ -33,48 +33,41 @@ class AdminTimetableController extends Controller
                 // Регулярные слоты
                 $q->orWhere(function($q2) use($startOfWeek, $endOfWeek) {
                     $q2->whereNull('date')
-                        ->whereHas('course', function($qc) use($startOfWeek, $endOfWeek) { // ИСПРАВЛЕНО: добавлен use
-                            // Фильтр по периоду существования курса
+                        ->whereHas('course', function($qc) use($startOfWeek, $endOfWeek) {
+                            // ВАЖНОЕ ИСПРАВЛЕНИЕ ▼▼▼
                             $qc->where('created_at', '<=', $endOfWeek)
-                                ->where(function($q3) use($startOfWeek) { // ИСПРАВЛЕНО: добавлен use
+                                ->where(function($q3) use($startOfWeek) {
                                     $q3->whereNull('duration')
                                         ->orWhere('duration', '>=', $startOfWeek);
-                                });
+                                })
+                                // Добавляем проверку начала курса
+                                ->where('created_at', '<=', $endOfWeek); // Эту строку добавляем
                         });
                 });
             })
-            // Исключаем родительские слоты, для которых есть исключения
-            ->whereDoesntHave('exceptions', function($q) use($startOfWeek, $endOfWeek) {
-                $q->whereBetween('date', [$startOfWeek, $endOfWeek]);
-            })
-            // Добавляем исключения
-            ->orWhereHas('parent', function($q) use($startOfWeek, $endOfWeek) {
-                $q->whereBetween('date', [$startOfWeek, $endOfWeek]);
-            })
             ->get();
 
-        // Группируем слоты по дням
+        // Группировка слотов с исправлением вычисления даты
         $groupedSlots = $slots->groupBy(function($slot) use($startOfWeek) {
             if ($slot->date) {
                 return $slot->date->toDateString();
             }
 
-            // Для регулярных слотов вычисляем дату
             $weekdayMap = [
-                'понедельник' => Carbon::MONDAY,
-                'вторник' => Carbon::TUESDAY,
-                'среда' => Carbon::WEDNESDAY,
-                'четверг' => Carbon::THURSDAY,
-                'пятница' => Carbon::FRIDAY,
-                'суббота' => Carbon::SATURDAY,
-                'воскресенье' => Carbon::SUNDAY,
+                'понедельник' => 0,
+                'вторник' => 1,
+                'среда' => 2,
+                'четверг' => 3,
+                'пятница' => 4,
+                'суббота' => 5,
+                'воскресенье' => 6,
             ];
 
             $weekday = $slot->weekday;
-            $dayOfWeek = $weekdayMap[$weekday] ?? null;
+            $dayIndex = $weekdayMap[$weekday] ?? null;
 
-            if ($dayOfWeek) {
-                return $startOfWeek->copy()->next($dayOfWeek)->toDateString();
+            if ($dayIndex !== null) {
+                return $startOfWeek->copy()->addDays($dayIndex)->toDateString();
             }
 
             return 'unscheduled';
@@ -83,13 +76,36 @@ class AdminTimetableController extends Controller
         $days = collect(range(0, 6))
             ->map(fn($i) => $startOfWeek->copy()->addDays($i));
 
+        // Добавляем фильтрацию по периоду курса ▼▼▼
+        $filteredGroupedSlots = collect();
+        foreach ($groupedSlots as $dateString => $slotsForDay) {
+            $filteredSlots = $slotsForDay->filter(function($slot) use ($dateString) {
+                // Для регулярных слотов (без даты) используем дату из группировки
+                $slotDate = $slot->date ?: Carbon::parse($dateString);
+
+                // Если курс не привязан - оставляем слот
+                if (!$slot->course) return true;
+
+                $courseStart = $slot->course->created_at->startOfDay();
+                $courseEnd = $slot->course->duration
+                    ? $slot->course->duration->endOfDay()
+                    : null;
+
+                return $slotDate >= $courseStart &&
+                    (!$courseEnd || $slotDate <= $courseEnd);
+            });
+
+            $filteredGroupedSlots[$dateString] = $filteredSlots->sortBy('start_time');
+        }
+
         return view('auth.admin.timetables.index', [
             'startOfWeek' => $startOfWeek,
             'endOfWeek' => $endOfWeek,
-            'groupedSlots' => $groupedSlots, // Явно передаем переменную
+            'groupedSlots' => $filteredGroupedSlots,
             'days' => $days
         ]);
     }
+
 
     public function create()
     {

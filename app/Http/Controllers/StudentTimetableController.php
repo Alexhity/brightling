@@ -31,7 +31,7 @@ class StudentTimetableController extends Controller
             ->get();
 
         // Фильтруем слоты по дате курса
-        $filteredSlots = $slots->filter(function($slot) use ($courses, $startOfWeek) {
+        $filteredSlots = $slots->filter(function($slot) use ($courses, $startOfWeek, $endOfWeek) {
             $course = $courses->firstWhere('id', $slot->course_id);
 
             // Если курс не найден, исключаем слот
@@ -44,22 +44,23 @@ class StudentTimetableController extends Controller
             if ($slot->date) {
                 $slotDate = Carbon::parse($slot->date);
 
-                // Проверяем попадает ли дата в период курса
+                // Проверяем попадает ли в период курса и текущую неделю
                 $afterStart = $slotDate->gte($courseStart);
                 $beforeEnd = $courseEnd ? $slotDate->lte($courseEnd) : true;
+                $inCurrentWeek = $slotDate->between($startOfWeek, $endOfWeek);
 
-                return $afterStart && $beforeEnd;
+                return $afterStart && $beforeEnd && $inCurrentWeek;
             }
             // Для регулярных занятий
             else {
                 $weekdayMap = [
-                    'понедельник' => Carbon::MONDAY,
-                    'вторник' => Carbon::TUESDAY,
-                    'среда' => Carbon::WEDNESDAY,
-                    'четверг' => Carbon::THURSDAY,
-                    'пятница' => Carbon::FRIDAY,
-                    'суббота' => Carbon::SATURDAY,
-                    'воскресенье' => Carbon::SUNDAY,
+                    'понедельник' => 0,
+                    'вторник' => 1,
+                    'среда' => 2,
+                    'четверг' => 3,
+                    'пятница' => 4,
+                    'суббота' => 5,
+                    'воскресенье' => 6,
                 ];
 
                 if (!isset($weekdayMap[$slot->weekday])) {
@@ -67,7 +68,8 @@ class StudentTimetableController extends Controller
                 }
 
                 // Вычисляем дату слота на текущей неделе
-                $slotDate = $startOfWeek->copy()->next($weekdayMap[$slot->weekday])->startOfDay();
+                $dayIndex = $weekdayMap[$slot->weekday];
+                $slotDate = $startOfWeek->copy()->addDays($dayIndex);
 
                 // Проверяем попадает ли дата в период курса
                 $afterStart = $slotDate->gte($courseStart);
@@ -77,7 +79,7 @@ class StudentTimetableController extends Controller
             }
         });
 
-        // Группируем слоты по дням
+        // Группируем слоты по дням с исправлением для понедельника
         $groupedSlots = $this->groupSlotsByWeek($filteredSlots, $startOfWeek);
 
         $days = collect(range(0, 6))
@@ -98,13 +100,13 @@ class StudentTimetableController extends Controller
         $grouped = [];
 
         $weekdayMap = [
-            'понедельник' => Carbon::MONDAY,
-            'вторник' => Carbon::TUESDAY,
-            'среда' => Carbon::WEDNESDAY,
-            'четверг' => Carbon::THURSDAY,
-            'пятница' => Carbon::FRIDAY,
-            'суббота' => Carbon::SATURDAY,
-            'воскресенье' => Carbon::SUNDAY,
+            'понедельник' => 0,
+            'вторник' => 1,
+            'среда' => 2,
+            'четверг' => 3,
+            'пятница' => 4,
+            'суббота' => 5,
+            'воскресенье' => 6,
         ];
 
         foreach ($slots as $slot) {
@@ -116,7 +118,8 @@ class StudentTimetableController extends Controller
             }
             // Для регулярных занятий
             elseif ($slot->weekday && isset($weekdayMap[$slot->weekday])) {
-                $date = $startOfWeek->copy()->next($weekdayMap[$slot->weekday])->toDateString();
+                $dayIndex = $weekdayMap[$slot->weekday];
+                $date = $startOfWeek->copy()->addDays($dayIndex)->toDateString();
             }
 
             if ($date) {

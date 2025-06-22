@@ -38,7 +38,6 @@ return new class extends Migration
             // Активен ли этот слот (если Нужно выключить временно)
             $table->boolean('active')->default(true);
 
-            $table->dateTime('enrollment_status')->nullable(); // удалить
 
             // Если это расписание для конкретного курса – ссылка на courses.id
             $table->foreignId('course_id')
