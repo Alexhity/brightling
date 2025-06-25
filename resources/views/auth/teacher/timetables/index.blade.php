@@ -118,8 +118,6 @@
             // группируем уроки по дате и периоду суток
             $dates = collect(range(0,6))->map(fn($i)=>$startOfWeek->copy()->addDays($i)->toDateString());
         @endphp
-        {{-- DEBUG --}}
-        <pre>{{ print_r($lessonsByDate->map->count()->toArray(), true) }}</pre>
 
 
         <table class="slots-table">

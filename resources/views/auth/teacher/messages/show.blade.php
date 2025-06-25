@@ -1,3 +1,4 @@
+{{-- Просмотр сообщения для учителя --}}
 @extends('layouts.app')
 
 @section('title','Просмотр сообщения')
@@ -42,7 +43,7 @@
     @include('layouts.left_sidebar_teacher')
     <div class="teacher-content-wrapper">
         <div class="message-card">
-            <h2>Сообщение {{ $message->sender_id===Auth::id()?'к': 'от' }}
+            <h2>Сообщение {{ $message->sender_id===Auth::id() ? 'к' : 'от' }}
                 {{ $message->sender->first_name }} {{ $message->sender->last_name }}</h2>
 
             <div class="field">
@@ -69,9 +70,7 @@
                     @csrf @method('PATCH')
                     <div class="form-group">
                         <label for="answer_text">Ваш ответ</label>
-                        <textarea name="answer_text" id="answer_text" rows="4" required
-                                  class="@error('answer_text') input-error @enderror">{{ old('answer_text') }}</textarea>
-                        @error('answer_text')<div class="error">{{ $message }}</div>@enderror
+                        <textarea name="answer_text" id="answer_text" rows="4" required></textarea>
                     </div>
                     <button type="submit" class="btn-submit">Отправить ответ</button>
                 </form>
@@ -82,4 +81,21 @@
             @endif
         </div>
     </div>
+    {{-- Показываем успешное сообщение 1 раз --}}
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: @json(session('success')),
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
+            });
+        </script>
+        @php session()->forget('success'); @endphp
+    @endif
 @endsection

@@ -1898,24 +1898,24 @@
                             <div class="error-message" data-for="language"></div>
                         </div>
 
+
                         <div class="form-group">
-                            <select id="timetable_slot_id" name="timetable_slot_id">
-                                <option value="" disabled {{ old('timetable_slot_id') ? '' : 'selected' }}>
-                                    Выберите время урока
-                                </option>
-                                @foreach($testSlots as $slot)
-                                    <option value="{{ $slot->id }}" {{ old('timetable_slot_id') == $slot->id ? 'selected' : '' }}>
-                                        @if($slot->date)
-                                            {{ \Carbon\Carbon::parse($slot->date)->translatedFormat('d M Y') }}
-                                        @else
-                                            {{ ucfirst($slot->weekday) }} (регулярно)
-                                        @endif
-                                        {{ $slot->start_time }} - {{ \Carbon\Carbon::parse($slot->start_time)->addMinutes($slot->duration)->format('H:i') }}
-                                    </option>
+                            <label for="lesson_id">Время урока</label>
+                            <select id="lesson_id" name="lesson_id" required>
+                                <option value="" disabled {{ old('lesson_id') ? '' : 'selected' }}>— выберите время —</option>
+                                @foreach($timeSlots as $dateKey => $slots)
+                                    <optgroup label="{{ $availableDates[$dateKey] }}">
+                                        @foreach($slots as $slot)
+                                            <option value="{{ $slot['id'] }}">
+                                                {{ $slot['start_time'] }} — {{ $slot['end_time'] }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
-                            <div class="error-message" data-for="timetable_slot_id"></div>
+                            <div class="error-message" data-for="lesson_id"></div>
                         </div>
+
 
                         <button type="submit" class="btn">Хочу на урок</button>
 
@@ -2118,39 +2118,44 @@
             </div>
         </div>
     </section>
-    <div id="contact-anchor"></div>
-    <section id="contact" class="contact-section">
-        <div class="contact-container">
-            <h2 class="contact-title">Связаться с нами</h2>
-            <p class="contact-subtitle">Оставьте свои контакты, и мы свяжемся с вами в ближайшее время</p>
 
-            <form method="POST" action="{{ route('contact.send') }}" class="contact-form">
-                @csrf
+        <div id="contact-anchor"></div>
+        <section id="contact" class="contact-section">
+            <div class="contact-container">
+                <h2 class="contact-title">Связаться с нами</h2>
+                <p class="contact-subtitle">Оставьте свои контакты, и мы свяжемся с вами в ближайшее время</p>
 
-                {{-- Первая строка: имя и email --}}
-                <div class="contact-row">
-                    <input
-                        type="text"
-                        name="name"
-                        value="{{ old('name') }}"
-                        placeholder="Ваше имя"
-                        class="contact-input contact-input--name"
-                        required
-                        style="background: white; color: black;"
-                    >
-                    <input
-                        type="email"
-                        name="email"
-                        value="{{ old('email') }}"
-                        placeholder="Ваш email"
-                        class="contact-input contact-input--email"
-                        required
-                        style="background: white; color: black;"
-                    >
-                </div>
+                <form id="contact-form"
+                      method="POST"
+                      action="{{ route('contact.send') }}"
+                      class="contact-form"
+                      novalidate>
+                    @csrf
 
-                {{-- Вторая строка: сообщение --}}
-                <div class="contact-row">
+                    {{-- Первая строка: имя и email --}}
+                    <div class="contact-row">
+                        <input
+                            type="text"
+                            name="name"
+                            value="{{ old('name') }}"
+                            placeholder="Ваше имя"
+                            class="contact-input contact-input--name"
+                            required
+                            style="background: white; color: black;"
+                        >
+                        <input
+                            type="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="Ваш email"
+                            class="contact-input contact-input--email"
+                            required
+                            style="background: white; color: black;"
+                        >
+                    </div>
+
+                    {{-- Вторая строка: сообщение --}}
+                    <div class="contact-row">
                 <textarea
                     name="message"
                     placeholder="Ваше сообщение"
@@ -2158,20 +2163,103 @@
                     required
                     style="background: white; color: black;"
                 >{{ old('message') }}</textarea>
-                </div>
+                    </div>
 
-                {{-- Кнопка отправки --}}
-                <div class="contact-row contact-row--button">
-                    <button type="submit" class="contact-button">Отправить</button>
-                </div>
-            </form>
-            @if(session('success'))
-                <div class="contact-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-        </div>
-    </section>
+                    {{-- Кнопка отправки --}}
+                    <div class="contact-row contact-row--button">
+                        <button type="submit" class="contact-button">Отправить</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        {{-- Серверные ошибки валидации --}}
+        @if($errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const errs = @json($errors->all());
+                    const list = errs.map(m => `<li>${m}</li>`).join('');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                });
+            </script>
+        @endif
+
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: @json(session('success')),
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    customClass: { popup: 'swal2-toast' }
+                });
+            });
+        </script>
+        @php
+            // Сразу убираем флаг, чтобы при “назад” его уже не было
+            session()->forget('success');
+        @endphp
+    @endif
+
+        {{-- Клиентская валидация --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('contact-form');
+                form.addEventListener('submit', function(e) {
+                    const errs = [];
+                    const name = form.name.value.trim();
+                    const email = form.email.value.trim();
+                    const message = form.message.value.trim();
+                    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                    if (!name) {
+                        errs.push('Введите ваше имя.');
+                    }
+                    if (!email) {
+                        errs.push('Введите ваш email.');
+                    } else if (!emailRe.test(email)) {
+                        errs.push('Введите корректный email.');
+                    }
+                    if (!message) {
+                        errs.push('Напишите сообщение.');
+                    } else if (message.length < 5) {
+                        errs.push('Сообщение должно быть не короче 5 символов.');
+                    }
+
+                    if (errs.length > 0) {
+                        e.preventDefault();
+                        const list = errs.map(m => `<li>${m}</li>`).join('');
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'error',
+                            title: 'Ошибка валидации',
+                            html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                            showConfirmButton: false,
+                            timer: 5000,
+                            timerProgressBar: true,
+                            customClass: { popup: 'swal2-toast' }
+                        });
+                    }
+                });
+            });
+        </script>
+
+
 
 
     {{--    <section class="reviews">--}}

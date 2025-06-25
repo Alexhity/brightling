@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('lessons', function (Blueprint $table) {
             $table->id();
             $table->string('zoom_link')->nullable();;
+            $table->string('material_path')->nullable();
             $table->date('date');
             $table->time('time');
             $table->string('status');

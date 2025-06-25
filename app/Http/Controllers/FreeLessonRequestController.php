@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lesson;
 use App\Models\Timetable;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\FreeLessonRequest; // ваша модель для заявки
 use App\Models\User;
@@ -34,26 +36,38 @@ class FreeLessonRequestController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:50',
-            'email' => 'required|email|max:255|unique:free_lesson_requests,email',
-            'language' => 'required|exists:languages,id',
-            'timetable_slot_id' => 'required|exists:timetables,id',
-            'agreement' => 'required|accepted'
+            'name'      => 'required|string|max:255',
+            'phone'     => 'required|string|max:50',
+            'email'     => 'required|email|max:255|unique:free_lesson_requests,email',
+            'language'  => 'required|exists:languages,id',
+            'lesson_id' => 'required|exists:lessons,id',  // <-- здесь!
+            'agreement' => 'required|accepted',
+        ], [
+            'name.required'       => 'Введите своё имя.',
+            'phone.required'      => 'Введите номер телефона.',
+            'email.required'      => 'Введите email.',
+            'email.email'         => 'Введите корректный email.',
+            'email.unique'        => 'Пользователь с таким email уже подал заявку.',
+            'language.required'   => 'Выберите язык.',
+            'language.exists'     => 'Выбран неверный язык.',
+            'lesson_id.required'  => 'Выберите время урока.',      // кастомное сообщение
+            'lesson_id.exists'    => 'Выбранное время урока недоступно.',
+            'agreement.required'  => 'Нужно принять пользовательское соглашение.',
+            'agreement.accepted'  => 'Нужно принять пользовательское соглашение.',
         ]);
 
         // Создаем заявку
         $freeRequest = FreeLessonRequest::create([
-            'name' => $validatedData['name'],
-            'phone' => $validatedData['phone'],
-            'email' => $validatedData['email'],
-            'language_id' => $validatedData['language'],
-            'status' => 'new',
+            'name'         => $validatedData['name'],
+            'phone'        => $validatedData['phone'],
+            'email'        => $validatedData['email'],
+            'language_id'  => $validatedData['language'],
+            'lesson_id'    => $validatedData['lesson_id'],  // сохраняем связь на урок
+            'status'       => 'new',
         ]);
 
-        // Привязываем слот к заявке через request_id
-        Timetable::where('id', $validatedData['timetable_slot_id'])
-            ->update(['request_id' => $freeRequest->id]);
+        // Удаляем request_id у слота, если вы раньше связывали через timetable:
+        // теперь не нужно
 
         return redirect()->back()->with('success', 'Ваша заявка успешно отправлена!');
     }
@@ -80,54 +94,41 @@ class FreeLessonRequestController extends Controller
 
     public function create()
     {
+        // Готовим данные
         $languages = Language::all();
 
-        // Получаем доступные тестовые слоты
-        $testSlots = Timetable::where('type', 'test')
-            ->where('active', true)
-            ->where('cancelled', false)
-            ->where('is_public', true)
-            ->whereNull('request_id')
-            ->where(function($query) {
-                $query->where('date', '>=', now()->format('Y-m-d'))
-                    ->orWhereNull('date');
-            })
-            ->orderBy('date')
-            ->orderBy('start_time')
+        // Пример получения уроков
+        $testLessons = Lesson::with('timetable')
+            ->where('type','test')
+            ->where('date','>=', now()->addDay()->toDateString())
+            ->where('status','scheduled')
             ->get();
 
-        // Формируем список доступных дат
         $availableDates = [];
-        $timeSlots = [];
+        $timeSlots      = [];
 
-        foreach ($testSlots as $slot) {
-            $dateKey = $slot->date ? $slot->date->format('Y-m-d') : $slot->weekday;
-            $dateLabel = $slot->date
-                ? $slot->date->translatedFormat('d M Y (D)')
-                : ucfirst($slot->weekday) . ' (регулярно)';
+        foreach($testLessons as $lesson) {
+            $dateKey   = $lesson->date->format('Y-m-d');
+            $dateLabel = $lesson->date->translatedFormat('d M Y (D)');
 
-            // Добавляем дату, если её еще нет
-            if (!isset($availableDates[$dateKey])) {
-                $availableDates[$dateKey] = $dateLabel;
-            }
+            $availableDates[$dateKey] = $dateLabel;
 
-            // Формируем данные о времени
-            $endTime = \Carbon\Carbon::parse($slot->start_time)
-                ->addMinutes($slot->duration)
-                ->format('H:i');
+            $start = \Carbon\Carbon::parse($lesson->time);
+            $end   = $start->copy()->addMinutes($lesson->timetable->duration);
 
             $timeSlots[$dateKey][] = [
-                'id' => $slot->id,
-                'start_time' => $slot->start_time,
-                'end_time' => $endTime
+                'id'         => $lesson->id,
+                'start_time' => $start->format('H:i'),
+                'end_time'   => $end->format('H:i'),
             ];
         }
 
-        return view('free_lesson_form', compact(
-            'languages',
-            'availableDates',
-            'timeSlots'
-        ));
+        // **Вот ключевой момент** — именно эти три массива нужно прокинуть в шаблон:
+        return view('main', [
+            'languages'      => $languages,
+            'availableDates' => $availableDates,
+            'timeSlots'      => $timeSlots,
+        ]);
     }
 
     public function createProfile(Request $request, $id)
@@ -174,6 +175,8 @@ class FreeLessonRequestController extends Controller
 
         return redirect()->back()->with('success', 'Заявка успешно удалена!');
     }
+
+
 
 
 

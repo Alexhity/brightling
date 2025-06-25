@@ -168,19 +168,23 @@
             </tbody>
         </table>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            @if(session('success'))
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: @json(session('success')),
-                showConfirmButton: false,
-                timer: 5000,
-                timerProgressBar: true,
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: @json(session('success')),
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
             });
-            @endif
-        });
-    </script>
+        </script>
+        @php
+            // Удаляем, чтобы при «Назад» больше не появлялось
+            session()->forget('success');
+        @endphp
+    @endif
 @endsection

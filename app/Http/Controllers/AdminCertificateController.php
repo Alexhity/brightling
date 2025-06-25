@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Certificate;
 use App\Models\Language;
 use App\Models\User;
-use Illuminate\Http\File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 
 class AdminCertificateController extends Controller

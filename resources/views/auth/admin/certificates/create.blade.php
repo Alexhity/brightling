@@ -58,17 +58,7 @@
             outline: none;
             border-color: #615f5f;
         }
-        .input-error {
-            border-color: #ff4c4c !important;
-        }
-        .error {
-            position: absolute;
-            bottom: -18px;
-            left: 0;
-            font-size: 13px;
-            color: #ff4c4c;
-            font-family: 'Montserrat Medium', sans-serif;
-        }
+        /* Убрали .input-error и .error */
         .buttons {
             margin-top: 20px;
             display: flex;
@@ -130,14 +120,20 @@
 
         @if(session('success'))
             <div class="alert-success">{{ session('success') }}</div>
+            @php session()->forget('success'); @endphp
         @endif
 
-        <form action="{{ route('admin.certificates.store') }}" method="POST" class="cert-form" enctype="multipart/form-data" novalidate>
+        <form id="cert-create-form"
+              action="{{ route('admin.certificates.store') }}"
+              method="POST"
+              class="cert-form"
+              enctype="multipart/form-data"
+              novalidate>
             @csrf
 
             <div class="form-group">
                 <label for="user_id">Пользователь</label>
-                <select name="user_id" id="user_id" class="@error('user_id') input-error @enderror">
+                <select name="user_id" id="user_id">
                     <option value="">— выберите пользователя —</option>
                     @foreach($users as $u)
                         <option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
@@ -145,19 +141,23 @@
                         </option>
                     @endforeach
                 </select>
-                @error('user_id')<div class="error">{{ $message }}</div>@enderror
             </div>
 
             <div class="form-group">
                 <label for="title">Заголовок сертификата</label>
-                <input type="text" id="title" name="title" value="{{ old('title') }}" class="@error('title') input-error @enderror" required>
-                @error('title')<div class="error">{{ $message }}</div>@enderror
+                <input type="text"
+                       id="title"
+                       name="title"
+                       value="{{ old('title') }}"
+                       required>
             </div>
 
             <div class="form-group">
-                <label for="file">Файл сертификата (PDF/JPG/PNG)</label>
-                <input type="file" id="file" name="file" class="@error('file') input-error @enderror" required>
-                @error('file')<div class="error">{{ $message }}</div>@enderror
+                <label for="file">Файл сертификата (JPG/PNG)</label>
+                <input type="file"
+                       id="file"
+                       name="file"
+                       required>
             </div>
 
             <div class="buttons">
@@ -166,23 +166,86 @@
             </div>
         </form>
     </div>
+
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Получаем массив «сырых» ошибок
+                let raw = @json($errors->all());
+
+                // Заменяем/фильтруем ключ 'validation.uploaded'
+                let errs = raw.map(msg => {
+                    if (msg === 'validation.uploaded') {
+                        // либо возвращаем какую-то нейтральную строку…
+                        return 'Не удалось загрузить файл.';
+                        // return null;
+                    }
+                    return msg;
+                })
+                    // Если вы возвращаете null для нежелательных, отфильтруем их:
+                    .filter(Boolean);
+
+                // Показываем оставшиеся
+                if (errs.length) {
+                    const list = errs.map(m => `<li>${m}</li>`).join('');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                }
+            });
+        </script>
+    @endif
+
+    {{-- Клиентская валидация --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const errors = @json($errors->all());
-
-            errors.forEach(msg => {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: msg,
-                    showConfirmButton: false,
-                    timer: 5000,
-                    timerProgressBar: true,
-                    customClass: {
-                        popup: 'swal2-toast'
+            const form = document.getElementById('cert-create-form');
+            form.addEventListener('submit', function(e) {
+                const errs = [];
+                // Проверяем, что пользователь выбран
+                if (!form.user_id.value) {
+                    errs.push('Выберите пользователя.');
+                }
+                // Заголовок не пустой
+                const title = form.title.value.trim();
+                if (!title) {
+                    errs.push('Введите заголовок сертификата.');
+                }
+                // Файл выбран и имеет разрешённый тип
+                const fileInput = form.file;
+                if (!fileInput.files.length) {
+                    errs.push('Загрузите файл сертификата.');
+                } else {
+                    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+                    const file = fileInput.files[0];
+                    if (!allowed.includes(file.type)) {
+                        errs.push('Файл должен быть JPG или PNG.');
                     }
-                });
+                }
+
+                if (errs.length > 0) {
+                    e.preventDefault();
+                    const list = errs.map(m => `<li>${m}</li>`).join('');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                }
             });
         });
     </script>

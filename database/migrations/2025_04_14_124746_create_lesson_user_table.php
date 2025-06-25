@@ -25,6 +25,9 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
+            $table->enum('status', ['present','absent'])->default('present');
+            $table->unsignedTinyInteger('mark')->nullable();
+
             $table->timestamps();
         });
     }

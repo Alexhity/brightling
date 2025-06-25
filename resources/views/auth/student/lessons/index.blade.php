@@ -1,4 +1,3 @@
-{{-- resources/views/auth/teacher/lessons/index.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
@@ -15,14 +14,14 @@
             margin-top: 30px;
             margin-bottom: 30px;
         }
-        .header-row{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .header-row .range-info {
-            font-size:14px;
-            color:#666;
+            font-size: 14px;
+            color: #666;
         }
         table.lessons {
             width: 100%;
@@ -47,31 +46,11 @@
             color: #333333;
             font-size: 14px;
         }
-        .table-action-btn {
-            display: inline-block;
-            padding: 6px 12px;
-            text-align: center;
-            font-family: 'Montserrat Medium', sans-serif;
-            font-size: 14px;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
-            min-width: 100px;
-        }
-        .table-action-edit {
-            background: #f0f0f0;
-            color: black;
-        }
-        .table-action-edit:hover {
-            background: #d9d9d9;
-        }
     </style>
 @endsection
 
 @section('content')
-    @include('layouts.left_sidebar_teacher')
+    @include('layouts.left_sidebar_student')
 
     <div class="admin-content-wrapper">
         <div class="header-row">
@@ -88,18 +67,18 @@
             <thead>
             <tr style="background:#e3effc;">
                 <th>Курс</th>
+                <th>Преподаватель</th>
                 <th>Дата и время</th>
                 <th>Ссылка</th>
                 <th>Материал</th>
                 <th>Тип</th>
                 <th>Статус</th>
-                <th>Действия</th>
             </tr>
             </thead>
             <tbody>
             @forelse($lessons as $lesson)
                 @php
-                    // корректно собираем дату и время из отдельных полей
+                    // Собираем корректный datetime
                     $dateString = $lesson->date instanceof \Carbon\Carbon
                         ? $lesson->date->toDateString()
                         : $lesson->date;
@@ -111,7 +90,7 @@
                         $dateString . ' ' . $timeString
                     );
                     $isPast = $dateTime->lt(now());
-                    // перевод типов на русский
+                    // Тип урока на русском
                     $types = [
                         'group'      => 'Групповой',
                         'individual' => 'Индивидуальный',
@@ -120,6 +99,7 @@
                 @endphp
                 <tr>
                     <td>{{ $lesson->course->title }}</td>
+                    <td>{{ $lesson->teacher->first_name }} {{ $lesson->teacher->last_name }}</td>
                     <td>{{ $dateTime->format('d.m.Y') }} в {{ $dateTime->format('H:i') }}</td>
                     <td>
                         @if($lesson->zoom_link)
@@ -127,7 +107,6 @@
                         @else
                             —
                         @endif
-
                     </td>
                     <td>
                         @if($lesson->material_path)
@@ -140,17 +119,11 @@
                     </td>
                     <td>{{ $types[$lesson->type] ?? ucfirst($lesson->type) }}</td>
                     <td>{{ $isPast ? 'Завершён' : 'Предстоящий' }}</td>
-                    <td>
-                        <a href="{{ route('teacher.lessons.edit', $lesson) }}"
-                           class="table-action-btn table-action-edit">
-                            Редактировать
-                        </a>
-                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="padding: 20px 0; text-align: center; color: #666;">
-                        Уроков в этом периоде нет
+                    <td colspan="7" style="padding: 20px 0; text-align: center; color: #666;">
+                        Уроков за этот период нет
                     </td>
                 </tr>
             @endforelse
@@ -171,26 +144,22 @@
                 timerProgressBar: true,
             });
             @endif
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const errors = @json($errors->all());
 
-            errors.forEach(msg => {
+            @if($errors->any())
+            const errs = @json($errors->all());
+            errs.forEach(msg => {
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: 'error',
                     title: msg,
                     showConfirmButton: false,
-                    timer: 10000,
+                    timer: 5000,
                     timerProgressBar: true,
-                    customClass: {
-                        popup: 'swal2-toast'
-                    }
+                    customClass: { popup: 'swal2-toast' }
                 });
             });
+            @endif
         });
     </script>
 @endsection

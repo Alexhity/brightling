@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Mail\FeedbackMail;
+use App\Models\Lesson;
 use App\Models\Timetable;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Language;
 use Illuminate\Support\Facades\Hash;
@@ -26,9 +28,40 @@ class MainController extends Controller
 //    Метод для получения языков в форму бесплатной заявки
     public function index()
     {
+        // 1) Все языки
         $languages = Language::all();
-        $testSlots = Timetable::where('type', 'test') ->get();
-        return view('main', compact('languages', 'testSlots'));
+
+        // 2) Сгенерированные “тестовые” уроки, начиная со следующего дня
+        $testLessons = Lesson::with('timetable')
+            ->where('type', 'test')
+            ->where('status', 'scheduled')
+            ->where('date', '>=', Carbon::tomorrow()->toDateString())
+            ->get();
+
+        // 3) Формируем availableDates и timeSlots
+        $availableDates = [];
+        $timeSlots      = [];
+
+        foreach ($testLessons as $lesson) {
+            $dateKey = $lesson->date->format('Y-m-d');
+            $availableDates[$dateKey] = $lesson->date->translatedFormat('d M Y (D)');
+
+            $start = Carbon::parse($lesson->time);
+            $end   = $start->copy()->addMinutes($lesson->timetable->duration);
+
+            $timeSlots[$dateKey][] = [
+                'id'         => $lesson->id,
+                'start_time' => $start->format('H:i'),
+                'end_time'   => $end->format('H:i'),
+            ];
+        }
+
+        // 4) Отдаём view 'main' вместе с тремя массивами
+        return view('main', [
+            'languages'      => $languages,
+            'availableDates' => $availableDates,
+            'timeSlots'      => $timeSlots,
+        ]);
     }
 
     public function sendContact(Request $request)

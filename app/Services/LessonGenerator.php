@@ -61,7 +61,9 @@ class LessonGenerator
 
         if ($slot->date) {
             $d     = Carbon::parse($slot->date);
-            $dates = $d->between($start, $realEnd) ? [$d] : [];
+            if ($d->gte($start) && $d->lte($realEnd)) {
+                $dates[] = $d;
+            }
         } else {
             $dow   = $map[$slot->weekday] ?? $start->dayOfWeek;
             $delta = ($dow - $start->dayOfWeek + 7) % 7;

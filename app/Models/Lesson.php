@@ -38,7 +38,9 @@ class Lesson extends Model
             'lesson_user',
             'lesson_id',
             'user_id'
-        )->withTimestamps();
+        )
+            ->withPivot('status', 'mark')   // убрали 'level'
+            ->withTimestamps();
     }
 
     public function students()
@@ -75,7 +77,7 @@ class Lesson extends Model
         return $this->belongsTo(Timetable::class);
     }
 
-    public function user_lessons() {
+    public function lesson_users() {
         return $this->hasMany(UserLesson::class);
     }
 

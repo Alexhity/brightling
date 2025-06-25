@@ -18,23 +18,28 @@
             align-items: center;
             gap: 1rem;
             margin-bottom: 20px;
-            text-align: center;
         }
-        .week-nav a {
-            text-decoration: none;
+        .week-nav a, .week-nav span {
             font-size: 18px;
             color: #333;
+            text-decoration: none;
+        }
+        .btn-current-week {
+            background: #e6e2f8;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-left: 10px;
+            display: inline-block;
         }
         .slots-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
         }
-        .slots-table th,
-        .slots-table td {
-            vertical-align: top;
-            padding: 10px;
+        .slots-table th, .slots-table td {
             border: 1px solid #e0e0e0;
+            padding: 10px;
+            vertical-align: top;
             width: 14.285%;
         }
         .slots-table th {
@@ -48,94 +53,58 @@
             height: 180px;
             overflow-y: auto;
         }
+        .time-period-header {
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            border-top: 1px solid #eee;
+            padding-top: 4px;
+            color: #555;
+        }
         .slot {
             background: #e6e2f8;
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
+            padding: 8px;
+            margin-bottom: 8px;
             font-size: 14px;
-            line-height: 1.4;
-            width: 100%;
-            box-sizing: border-box;
+            line-height: 1.3;
             position: relative;
         }
-        .slot--inactive {
-            background: #f0f0f0 !important;
+        .slot--cancelled {
+            background: #f0f0f0;
             color: #888;
         }
-        .slot--inactive::after {
+        .slot--cancelled::after {
             content: 'Отменено';
             position: absolute;
-            top: 8px;
-            right: 10px;
+            top: 4px;
+            right: 8px;
             font-size: 12px;
-            font-weight: bold;
             color: #b00;
-            background: rgba(255,255,255,0.7);
-            padding: 2px 6px;
-            border-radius: 3px;
         }
         .slot-header {
+            font-family: 'Montserrat SemiBold', sans-serif;
+            margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        .slot-title {
-            font-family: 'Montserrat SemiBold', sans-serif;
-            font-size: 15px;
-            color: #2c3e50;
         }
         .slot-time {
-            margin-bottom: 6px;
-            color: #2B2D42;
-        }
-        .slot-teacher {
-            margin-bottom: 6px;
-            color: #555;
+            font-weight: bold;
+            margin-bottom: 4px;
         }
         .slot-type {
             font-style: italic;
             color: #6c757d;
-            margin-bottom: 5px;
         }
-        .slot-status {
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .status-cancelled {
-            background-color: #dc3545;
-            color: #fff;
+        .slot-teacher {
+            margin-bottom: 4px;
+            color: #555;
         }
         .slot-empty {
             text-align: center;
             color: #95a5a6;
             padding: 15px 0;
             font-size: 14px;
-        }
-
-        /* Группировка по времени */
-        .time-period-header {
-            font-weight: bold;
-            padding: 8px 0 4px;
-            margin-top: 10px;
-            border-top: 1px solid #eee;
-            color: #555;
-        }
-        .slot-morning { background-color: #fff9db; border-left: 3px solid #ffd43b; }
-        .slot-afternoon { background-color: #d3f9d8; border-left: 3px solid #40c057; }
-        .slot-evening { background-color: #e7f5ff; border-left: 3px solid #4dabf7; }
-
-        /* Кнопка "Текущая неделя" */
-        .btn-current-week {
-            display: inline-block;
-            background: #e6e2f8;
-            padding: 5px 10px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 14px;
-            margin-left: 10px;
         }
     </style>
 @endsection
@@ -144,27 +113,19 @@
     @include('layouts.left_sidebar_student')
 
     @php
-        // Инициализируем переменные для безопасности
         use Carbon\Carbon;
-        $groupedSlots = $groupedSlots ?? collect();
+        // Если контроллер по какой-то причине не передал — чтобы не было ошибки:
+        $lessonsByDate = $lessonsByDate ?? collect();
     @endphp
 
     <div class="admin-content-wrapper">
-        <h2>Мое расписание</h2>
+        <h2>Моё расписание</h2>
 
         <div class="week-nav">
-            <a href="{{ route('student.timetable', ['week_start' => $startOfWeek->copy()->subWeek()->toDateString()]) }}">
-                ← Предыдущая неделя
-            </a>
-            <span>
-                {{ $startOfWeek->format('d.m.Y') }} — {{ $endOfWeek->format('d.m.Y') }}
-            </span>
-            <a href="{{ route('student.timetable', ['week_start' => $startOfWeek->copy()->addWeek()->toDateString()]) }}">
-                Следующая неделя →
-            </a>
-            <a href="{{ route('student.timetable') }}" class="btn-current-week">
-                Текущая неделя
-            </a>
+            <a href="{{ route('student.timetable', ['week_start' => $startOfWeek->copy()->subWeek()->toDateString()]) }}">← Пред. неделя</a>
+            <span>{{ $startOfWeek->format('d.m.Y') }} — {{ $endOfWeek->format('d.m.Y') }}</span>
+            <a href="{{ route('student.timetable', ['week_start' => $startOfWeek->copy()->addWeek()->toDateString()]) }}">След. неделя →</a>
+            <a href="{{ route('student.timetable') }}" class="btn-current-week">Текущая неделя</a>
         </div>
 
         <table class="slots-table">
@@ -172,78 +133,112 @@
             <tr>
                 @php
                     $abbr = [
-                        'понедельник' => 'пн',
-                        'вторник' => 'вт',
-                        'среда' => 'ср',
-                        'четверг' => 'чт',
-                        'пятница' => 'пт',
-                        'суббота' => 'сб',
-                        'воскресенье' => 'вс'
+                        'понедельник'=>'пн','вторник'=>'вт','среда'=>'ср',
+                        'четверг'=>'чт','пятница'=>'пт','суббота'=>'сб','воскресенье'=>'вс',
                     ];
                 @endphp
-
-                @foreach ($days as $day)
+                @foreach($days as $date)
                     @php
-                        $weekday = mb_strtolower($day->translatedFormat('l'));
+                        $wd = mb_strtolower(Carbon::parse($date)->translatedFormat('l'));
                     @endphp
                     <th>
-                        <div>{{ $abbr[$weekday] ?? $weekday }}</div>
-                        <div>{{ $day->format('d.m') }}</div>
+                        <div>{{ $abbr[$wd] ?? $wd }}</div>
+                        <div>{{ Carbon::parse($date)->format('d.m') }}</div>
                     </th>
                 @endforeach
             </tr>
             </thead>
             <tbody>
             <tr>
-                @foreach ($days as $day)
+                @foreach($days as $date)
                     @php
-                        $dateKey = $day->toDateString();
-                        $daySlots = $groupedSlots->get($dateKey, []);
+                        // получаем коллекцию уроков на эту дату (или пустую)
+                        $lessons = $lessonsByDate->get($date, collect());
 
-                        // Группируем слоты по времени суток
-                        $morningSlots = [];
-                        $afternoonSlots = [];
-                        $eveningSlots = [];
-
-                        foreach ($daySlots as $s) { // Используем $s вместо $slot
-                            $hour = Carbon::parse($s->start_time)->hour;
-
-                            if ($hour < 12) {
-                                $morningSlots[] = $s;
-                            } elseif ($hour < 17) {
-                                $afternoonSlots[] = $s;
+                        // разобьём по периодам
+                        $morning = []; $afternoon = []; $evening = [];
+                        foreach($lessons as $lesson){
+                            $h = Carbon::parse($lesson->time)->hour;
+                            if ($h < 12) {
+                                $morning[] = $lesson;
+                            } elseif ($h < 17) {
+                                $afternoon[] = $lesson;
                             } else {
-                                $eveningSlots[] = $s;
+                                $evening[] = $lesson;
                             }
                         }
                     @endphp
 
                     <td>
-                        @if(count($morningSlots) > 0 || count($afternoonSlots) > 0 || count($eveningSlots) > 0)
-                            @if(count($morningSlots) > 0)
-                                <div class="time-period-header">Утро</div>
-                                @foreach($morningSlots as $s)
-                                    @include('auth.student.timetables.slot', ['slot' => $s])
-                                @endforeach
-                            @endif
+                        {{-- УТРО --}}
+                        @if(count($morning))
+                            <div class="time-period-header">Утро</div>
+                            @foreach($morning as $l)
+                                <div class="slot @if($l->status==='cancelled') slot--cancelled @endif">
+                                    <div class="slot-header">
+                                        <span>{{ $l->course->title }}</span>
+                                    </div>
+                                    <div class="slot-time">{{ Carbon::parse($l->time)->format('H:i') }}</div>
+                                    <div class="slot-type">
+                                        @if($l->type==='group') Групповое
+                                        @elseif($l->type==='individual') Индивидуальное
+                                        @else Тестовый
+                                        @endif
+                                    </div>
+                                    <div class="slot-teacher">
+                                        {{ $l->teacher->first_name }} {{ $l->teacher->last_name }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
 
-                            @if(count($afternoonSlots) > 0)
-                                <div class="time-period-header">День</div>
-                                @foreach($afternoonSlots as $s)
-                                    @include('auth.student.timetables.slot', ['slot' => $s])
-                                @endforeach
-                            @endif
+                        {{-- ДЕНЬ --}}
+                        @if(count($afternoon))
+                            <div class="time-period-header">День</div>
+                            @foreach($afternoon as $l)
+                                <div class="slot @if($l->status==='cancelled') slot--cancelled @endif">
+                                    <div class="slot-header">
+                                        <span>{{ $l->course->title }}</span>
+                                    </div>
+                                    <div class="slot-time">{{ Carbon::parse($l->time)->format('H:i') }}</div>
+                                    <div class="slot-type">
+                                        @if($l->type==='group') Групповое
+                                        @elseif($l->type==='individual') Индивидуальное
+                                        @else Тестовый
+                                        @endif
+                                    </div>
+                                    <div class="slot-teacher">
+                                        {{ $l->teacher->first_name }} {{ $l->teacher->last_name }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
 
-                            @if(count($eveningSlots) > 0)
-                                <div class="time-period-header">Вечер</div>
-                                @foreach($eveningSlots as $s)
-                                    @include('auth.student.timetables.slot', ['slot' => $s])
-                                @endforeach
-                            @endif
-                        @else
-                            <div class="slot-empty">
-                                Нет занятий
-                            </div>
+                        {{-- ВЕЧЕР --}}
+                        @if(count($evening))
+                            <div class="time-period-header">Вечер</div>
+                            @foreach($evening as $l)
+                                <div class="slot @if($l->status==='cancelled') slot--cancelled @endif">
+                                    <div class="slot-header">
+                                        <span>{{ $l->course->title }}</span>
+                                    </div>
+                                    <div class="slot-time">{{ Carbon::parse($l->time)->format('H:i') }}</div>
+                                    <div class="slot-type">
+                                        @if($l->type==='group') Групповое
+                                        @elseif($l->type==='individual') Индивидуальное
+                                        @else Тестовый
+                                        @endif
+                                    </div>
+                                    <div class="slot-teacher">
+                                        {{ $l->teacher->first_name }} {{ $l->teacher->last_name }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+
+                        {{-- НЕТ УРОКОВ --}}
+                        @if(!count($morning) && !count($afternoon) && !count($evening))
+                            <div class="slot-empty">Нет занятий</div>
                         @endif
                     </td>
                 @endforeach

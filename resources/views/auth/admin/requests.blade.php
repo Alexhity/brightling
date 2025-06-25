@@ -1,168 +1,160 @@
+{{-- resources/views/auth/admin/requests/index.blade.php --}}
 @extends('layouts.app')
-
-@section('title', 'Админ-панель - Заявки')
 
 @section('styles')
     <style>
-        .admin-container {
-            max-width: 1250px;
-
+        .admin-content-wrapper {
+            margin-left: 200px;
+            width: calc(100% - 200px);
             font-family: 'Montserrat Medium', sans-serif;
-            font-size: 15px;
-
-            margin-left: 150px;
-            /*width: calc(100% - 200px);*/
-            padding: 20px;
         }
-
-        /* Заявки на бесплатный урок */
-        .requests-header {
+        h2 {
             font-family: 'Montserrat Bold', sans-serif;
-            font-size: 1.5em;
-            color: #2B2D42;
-            margin-bottom: 20px;
+            color: #333333;
+            font-size: 32px;
+            margin-top: 30px;
+            margin-bottom: 30px;
             text-align: center;
         }
-        .requests-container {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 20px;
-            max-height: 500px;
-            overflow-y: auto;
-            background-color: #f8f9fa;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .request-table {
+        table.requests {
             width: 100%;
             border-collapse: collapse;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 16px;
         }
-        .request-table th,
-        .request-table td {
-            padding: 10px;
+        .requests th,
+        .requests td {
+            padding: 12px 20px;
             border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+        .requests th {
+            background: #fff6d0;
+            font-family: 'Montserrat SemiBold', sans-serif;
+            color: #333333;
+            font-size: 16px;
+        }
+        .requests td {
             font-family: 'Montserrat Medium', sans-serif;
-            text-align: left;
+            color: #333333;
+            font-size: 14px;
         }
-        .request-table th {
-            background-color: #f1f1f1;
-            font-family: 'Montserrat SemiBold', sans-serif;
-            color: #2B2D42;
-        }
-        /* Кнопки */
-        .action-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Montserrat SemiBold', sans-serif;
-            margin-bottom: 5px;
-        }
-        .btn-primary {
-            background-color: #FFE644;
-            color: #2B2D42;
-        }
-        .btn-primary:hover {
-            background-color: #feca1c;
-        }
-        .btn-success {
-            background-color: #8986FF;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background-color: #5553a3;
-        }
-        /* Стили для селекта */
-        .custom-select {
+        .table-action-delete {
+            display: inline-block;
             padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            background: #ffcccc;
+            color: black;
             font-family: 'Montserrat Medium', sans-serif;
+            font-size: 14px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background .2s;
+            text-decoration: none;
         }
-        /* Alert */
-        .alert-success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            padding: 10px;
-            border-radius: 4px;
-            color: #42674a;
-            font-family: 'Montserrat Medium', sans-serif;
-            margin-bottom: 20px;
+        .table-action-delete:hover {
+            background: #ffaaaa;
         }
     </style>
 @endsection
 
 @section('content')
     @include('layouts.left_sidebar_admin')
-    <div class="admin-container">
-        <!-- Заявки на бесплатный урок -->
-        <h2 class="requests-header">Заявки на бесплатный урок</h2>
+
+    <div class="admin-content-wrapper">
+        <div class="header-row">
+            <h2>Заявки на бесплатный урок</h2>
+        </div>
 
         @if(session('success'))
-            <div class="alert-success">{{ session('success') }}</div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: @json(session('success')),
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                });
+            </script>
+            @php session()->forget('success'); @endphp
         @endif
 
-        <div class="requests-container">
-            <!-- Форма для "Обработать все" -->
-            <div style="margin-bottom: 20px;">
-                <form action="{{ route('admin.requests.createProfilesAll') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="action-btn btn-primary" onclick="return confirm('Вы действительно хотите обработать все заявки и создать личные кабинеты для всех пользователей ниже?');">
-                        Обработать все
-                    </button>
-                </form>
-            </div>
-
-            @if($requests->isEmpty())
-                <p>Нет новых заявок.</p>
-            @else
-                <table class="request-table">
-                    <thead>
+        @if($requests->isEmpty())
+            <p style="text-align:center; font-style:italic; color:#666;">Нет заявок.</p>
+        @else
+            <table class="requests">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                    <th>Язык</th>
+                    <th>Роль</th>
+                    <th>Дата заявки</th>
+                    <th>Дата урока</th>
+                    <th>Время урока</th>
+                    <th>Удалить</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach($requests as $app)
                     <tr>
-                        <th>ID</th>
-                        <th>Имя</th>
-                        <th>Телефон</th>
-                        <th>Email</th>
-                        <th>Язык</th>
-                        <th>Роль</th>
-                        <th>Дата</th>
-                        <th>Действия</th>
+                        <td>{{ $app->id }}</td>
+                        <td>{{ $app->name }}</td>
+                        <td>{{ $app->phone }}</td>
+                        <td>{{ $app->email }}</td>
+                        <td>{{ $app->language->name ?? '—' }}</td>
+                        <td>{{ __('roles.' . $app->requested_role) }}</td>
+                        <td>{{ $app->created_at->format('d.m.Y H:i') }}</td>
+                        <td>{{ optional($app->lesson)->date?->format('d.m.Y') ?? '—' }}</td>
+                        <td>{{ optional($app->lesson)->time?->format('H:i') ?? '—' }}</td>
+                        <td>
+                            <form action="{{ route('admin.requests.destroy', $app->id) }}"
+                                  method="POST"
+                                  data-delete-form
+                                  data-app-id="{{ $app->id }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="table-action-delete">Удалить</button>
+                            </form>
+                        </td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($requests as $application)
-                        <tr>
-                            <td>{{ $application->id }}</td>
-                            <td>{{ $application->name }}</td>
-                            <td>{{ $application->phone }}</td>
-                            <td>{{ $application->email }}</td>
-                            <td>{{ $application->language ? $application->language->name : 'Не выбран' }}</td>
-                            <td>
-                                <!-- Форма для изменения запрошенной роли -->
-                                <form action="{{ route('admin.requests.updateRole', $application->id) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    <select name="requested_role" class="custom-select" onchange="this.form.submit()">
-                                        <option value="student" {{ $application->requested_role === 'student' ? 'selected' : '' }}>Student</option>
-                                        <option value="teacher" {{ $application->requested_role === 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                        <option value="admin"   {{ $application->requested_role === 'admin'   ? 'selected' : '' }}>Admin</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>{{ $application->created_at->format('d.m.Y H:i') }}</td>
-                            <td>
-                                <!-- Форма для обработки (создания личного кабинета) для отдельной заявки -->
-                                <form action="{{ route('admin.requests.createProfile', $application->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="action-btn btn-success" onclick="return confirm('Вы действительно хотите обработать заявку и создать личный кабинет?');">
-                                        Обработать
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </div>
+                @endforeach
+                </tbody>
+            </table>
+
+            {{ $requests->withQueryString()->links() }}
+        @endif
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('form[data-delete-form]').forEach(form => {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const id = form.dataset.appId;
+                    Swal.fire({
+                        title: `Удалить заявку #${id}?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Да, удалить',
+                        cancelButtonText: 'Отмена',
+                        reverseButtons: true,
+                    }).then(result => {
+                        if (result.isConfirmed) form.submit();
+                    });
+                });
+            });
+        });
+    </script>
 @endsection

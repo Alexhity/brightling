@@ -58,17 +58,7 @@
             outline: none;
             border-color: #615f5f;
         }
-        .input-error {
-            border-color: #ff4c4c !important;
-        }
-        .error {
-            position: absolute;
-            bottom: -18px;
-            left: 0;
-            font-size: 13px;
-            color: #ff4c4c;
-            font-family: 'Montserrat Medium', sans-serif;
-        }
+        /* убрали .input-error и .error */
         .buttons {
             margin-top: 20px;
             display: flex;
@@ -130,9 +120,15 @@
 
         @if(session('success'))
             <div class="alert-success">{{ session('success') }}</div>
+            @php session()->forget('success'); @endphp
         @endif
 
-        <form action="{{ route('admin.certificates.update', $certificate->id) }}" method="POST" class="cert-form" enctype="multipart/form-data" novalidate>
+        <form id="cert-edit-form"
+              action="{{ route('admin.certificates.update', $certificate->id) }}"
+              method="POST"
+              class="cert-form"
+              enctype="multipart/form-data"
+              novalidate>
             @csrf
             @method('PUT')
 
@@ -141,24 +137,28 @@
                 <select name="user_id" id="user_id">
                     <option value="">— выберите пользователя —</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ old('user_id', $certificate->user_id) == $u->id ? 'selected' : '' }}>
+                        <option value="{{ $u->id }}"
+                            {{ old('user_id', $certificate->user_id) == $u->id ? 'selected' : '' }}>
                             {{ $u->first_name }} {{ $u->last_name }} ({{ $u->email }})
                         </option>
                     @endforeach
                 </select>
-
             </div>
 
             <div class="form-group">
                 <label for="title">Заголовок сертификата</label>
-                <input type="text" id="title" name="title" value="{{ old('title', $certificate->title) }}" class="@error('title') input-error @enderror" required>
-                @error('title')<div class="error">{{ $message }}</div>@enderror
+                <input type="text"
+                       id="title"
+                       name="title"
+                       value="{{ old('title', $certificate->title) }}"
+                       required>
             </div>
 
             <div class="form-group">
                 <label for="file">Файл сертификата (PDF/JPG/PNG)</label>
-                <input type="file" id="file" name="file" class="@error('file') input-error @enderror">
-                @error('file')<div class="error">{{ $message }}</div>@enderror
+                <input type="file"
+                       id="file"
+                       name="file">
             </div>
 
             <div class="buttons">
@@ -168,20 +168,64 @@
         </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const errors = @json($errors->all());
-            errors.forEach(msg => {
+    {{-- Серверные ошибки --}}
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const errs = @json($errors->all());
+                const list = errs.map(m => `<li>${m}</li>`).join('');
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: 'error',
-                    title: msg,
+                    title: 'Ошибка валидации',
+                    html: `<ul style="text-align:left; margin:0">${list}</ul>`,
                     showConfirmButton: false,
                     timer: 5000,
                     timerProgressBar: true,
                     customClass: { popup: 'swal2-toast' }
                 });
+            });
+        </script>
+    @endif
+
+    {{-- Клиентская валидация --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('cert-edit-form');
+            form.addEventListener('submit', function(e) {
+                const errs = [];
+
+                if (!form.user_id.value) {
+                    errs.push('Выберите пользователя.');
+                }
+                const title = form.title.value.trim();
+                if (!title) {
+                    errs.push('Введите заголовок сертификата.');
+                }
+                if (form.file.files.length) {
+                    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+                    const file = form.file.files[0];
+                    if (!allowed.includes(file.type)) {
+                        errs.push('Файл должен быть PDF, JPG или PNG.');
+                    }
+                }
+
+                if (errs.length > 0) {
+                    e.preventDefault();
+                    const list = errs.map(m => `<li>${m}</li>`).join('');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                }
             });
         });
     </script>

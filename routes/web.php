@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\StudentCoursesController;
 use App\Http\Controllers\StudentHomeworkController;
+use App\Http\Controllers\StudentLessonController;
 use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\StudentReviewsController;
@@ -293,6 +294,16 @@ Route::get('/teacher/statistics', [TeacherStatisticsController::class, 'index'])
 Route::get('/teacher/timetable', [TeacherTimetableController::class, 'index'])
     ->name('teacher.timetable')->middleware([ IsTeacher::class]);
 
+
+// Уроки
+Route::get('lessons', [\App\Http\Controllers\TeacherLessonController::class,'index'])
+    ->name('teacher.lessons.index')->middleware([ IsTeacher::class]);
+Route::get('lessons/{lesson}/edit', [\App\Http\Controllers\TeacherLessonController::class,'edit'])
+    ->name('teacher.lessons.edit')->middleware([ IsTeacher::class]);
+Route::put('lessons/{lesson}', [\App\Http\Controllers\TeacherLessonController::class,'update'])
+    ->name('teacher.lessons.update')->middleware([ IsTeacher::class]);
+
+
 // Курсы
 // Страница "Мои курсы"
 // Список курсов
@@ -347,6 +358,7 @@ Route::delete('homeworks/{homework}',   [TeacherHomeworkController::class,'destr
 
 
 
+
 // ПАНЕЛЬ СТУДЕНТА
 Route::get('/student/statistics', [StudentStatisticsController::class, 'index'])
     ->name('student.statistics')->middleware([ IsStudent::class]);
@@ -393,6 +405,10 @@ Route::patch('student/messages/{message}', [StudentMessageController::class,'rep
 Route::get('student/homeworks', [StudentHomeworkController::class, 'studentIndex'])
     ->name('student.homeworks')->middleware([ IsStudent::class]);
 
+// уроки
+
+Route::get('student/lessons', [StudentLessonController::class, 'index'])
+    ->name('student.lessons.index')->middleware([ IsStudent::class]);
 
 
 

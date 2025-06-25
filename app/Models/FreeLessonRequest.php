@@ -13,6 +13,7 @@ class FreeLessonRequest extends Model
         'status',
         'requested_role',
         'language_id',
+        'lesson_id',
     ];
 
 
@@ -26,6 +27,11 @@ class FreeLessonRequest extends Model
     public function timetable()
     {
         return $this->belongsTo(Timetable::class);
+    }
+
+    public function lesson()
+    {
+        return $this->belongsTo(Lesson::class);
     }
 
 }

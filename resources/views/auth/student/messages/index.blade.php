@@ -49,7 +49,7 @@
         }
         .filter-row a:hover { background: #f0f0f0; }
         .filter-row a.active {
-            background: #dddddd;
+            background: #f0f0f0;
             font-family: 'Montserrat SemiBold', sans-serif;
         }
 
