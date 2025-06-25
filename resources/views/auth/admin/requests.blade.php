@@ -1,10 +1,20 @@
 {{-- resources/views/auth/admin/requests/index.blade.php --}}
+@php
+    use Carbon\Carbon;
+@endphp
+@php
+    $roleLabels = [
+        'student' => 'Студент',
+        'teacher' => 'Преподаватель',
+        'admin'   => 'Администратор',
+    ];
+@endphp
 @extends('layouts.app')
 
 @section('styles')
     <style>
         .admin-content-wrapper {
-            margin-left: 200px;
+            margin-left: 120px;
             width: calc(100% - 200px);
             font-family: 'Montserrat Medium', sans-serif;
         }
@@ -69,6 +79,10 @@
     <div class="admin-content-wrapper">
         <div class="header-row">
             <h2>Заявки на бесплатный урок</h2>
+            <form action="{{ route('admin.requests.createProfilesAll') }}" method="POST" onsubmit="return confirm('Обработать все заявки?');">
+                @csrf
+                <button type="submit" class="btn-create">Обработать все</button>
+            </form>
         </div>
 
         @if(session('success'))
@@ -114,10 +128,47 @@
                         <td>{{ $app->phone }}</td>
                         <td>{{ $app->email }}</td>
                         <td>{{ $app->language->name ?? '—' }}</td>
-                        <td>{{ __('roles.' . $app->requested_role) }}</td>
+                        <td>
+                            {{-- 1. Выводим текущую роль --}}
+
+
+                            {{-- 2. Форма для смены --}}
+                            <form action="{{ route('admin.requests.updateRole', $app->id) }}"
+                                  method="POST"
+                                  style="margin-top:4px;">
+                                @csrf
+                                @method('PATCH')
+                                <select name="requested_role"
+                                        class="custom-select"
+                                        onchange="this.form.submit()"
+                                        style="font-size:14px;">
+                                    @foreach($roleLabels as $key => $label)
+                                        <option value="{{ $key }}"
+                                            {{ $app->requested_role === $key ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </td>
+
+
                         <td>{{ $app->created_at->format('d.m.Y H:i') }}</td>
-                        <td>{{ optional($app->lesson)->date?->format('d.m.Y') ?? '—' }}</td>
-                        <td>{{ optional($app->lesson)->time?->format('H:i') ?? '—' }}</td>
+
+                        <td>
+                            @if($app->lesson && $app->lesson->date)
+                                {{ Carbon::parse($app->lesson->date)->format('d.m.Y') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if($app->lesson && $app->lesson->time)
+                                {{ Carbon::parse($app->lesson->time)->format('H:i') }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td>
                             <form action="{{ route('admin.requests.destroy', $app->id) }}"
                                   method="POST"
@@ -133,7 +184,7 @@
                 </tbody>
             </table>
 
-            {{ $requests->withQueryString()->links() }}
+
         @endif
     </div>
 

@@ -15,21 +15,24 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AccountCreated;
 
+
 class FreeLessonRequestController extends Controller
 
 {
 
     public function index(Request $request)
     {
-        $requests = FreeLessonRequest::query();
+        $query = FreeLessonRequest::with(['language', 'lesson']);
 
+        // При необходимости фильтры, например по роли:
         if ($request->filled('role')) {
-            $requests->where('requested_role', $request->role);
+            $query->where('requested_role', $request->role);
         }
 
-        return view('admin.requests.index', [
-            'requests' => $requests->paginate(20)
-        ]);
+        // пагинируем результат
+        $requests = $query->orderBy('created_at', 'desc');
+
+        return view('auth.admin.requests.index', compact('requests'));
     }
 
 
@@ -181,6 +184,8 @@ class FreeLessonRequestController extends Controller
 
 
 
+
+
     // Создание профиля
 //    public function createProfile(Request $request, $id)
 //    {
@@ -216,33 +221,46 @@ class FreeLessonRequestController extends Controller
     public function createProfilesAll(Request $request)
     {
         set_time_limit(0);
-        // Выбираем только заявки с неутверждённым статусом, например, не 'approved'
+
         $pendingRequests = FreeLessonRequest::where('status', '<>', 'approved')->get();
 
         foreach ($pendingRequests as $application) {
-            // Генерация случайного пароля
-            $randomPassword = Str::random(5);
-
-            // Создаём пользователя, копируя данные из заявки.
-            // Обратите внимание, что в таблице users должны быть соответствующие столбцы.
+            // 1) создаём пользователя
+            $randomPassword = Str::random(8);
             $user = User::create([
                 'first_name' => $application->name,
                 'email'      => $application->email,
                 'phone'      => $application->phone,
                 'role'       => $application->requested_role,
                 'password'   => Hash::make($randomPassword),
-                // можно добавить и другие поля, если требуется
             ]);
 
-            // Обновляем статус заявки на "approved" или другой статус обработки
+            // 2) привязываем студента к уроку, если он выбран
+            if ($application->lesson_id) {
+                $lesson = Lesson::find($application->lesson_id);
+                if ($lesson) {
+                    // attach, если ещё нет
+                    if (!$lesson->students()->where('user_id', $user->id)->exists()) {
+                        $lesson->students()->attach($user->id);
+                    }
+                    // обновляем статус урока
+                    $lesson->status = 'scheduled';
+                    $lesson->save();
+                }
+            }
+
+            // 3) отмечаем заявку как обработанную
             $application->status = 'approved';
             $application->save();
 
-            // Отправляем письмо с информацией для входа
-            Mail::to($application->email)->send(new AccountCreated($user, $randomPassword));
+            // 4) отправляем письмо с данными
+            Mail::to($application->email)
+                ->send(new AccountCreated($user, $randomPassword));
         }
 
-        return redirect()->back()->with('success', 'Все заявки успешно обработаны. Личные кабинеты созданы.');
+        return redirect()
+            ->back()
+            ->with('success', 'Все заявки успешно обработаны, личные кабинеты созданы и уроки привязаны.');
     }
 
 }

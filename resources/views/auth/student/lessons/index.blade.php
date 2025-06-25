@@ -98,7 +98,13 @@
                     ];
                 @endphp
                 <tr>
-                    <td>{{ $lesson->course->title }}</td>
+                    <td>
+                        @if($lesson->type === 'test')
+                            Тестовый урок
+                        @else
+                            {{ optional($lesson->course)->title ?? '—' }}
+                        @endif
+                    </td>
                     <td>{{ $lesson->teacher->first_name }} {{ $lesson->teacher->last_name }}</td>
                     <td>{{ $dateTime->format('d.m.Y') }} в {{ $dateTime->format('H:i') }}</td>
                     <td>

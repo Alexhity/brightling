@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lesson;
 use Illuminate\Http\Request;
 use App\Models\FreeLessonRequest;
 use App\Models\User;
@@ -59,11 +60,23 @@ class AdminRequestsController extends Controller
 
     public function createProfilesAll(Request $request)
     {
-        $pendingRequests = FreeLessonRequest::where('status', '<>', 'approved')->get();
+        // Сразу забираем все email в users
+        $existingEmails = User::pluck('email')->all();
 
-        foreach ($pendingRequests as $application) {
+        $skipped = [];  // сюда будем заносить email, которые уже были
+
+        $pending = FreeLessonRequest::where('status', '<>', 'approved')->get();
+
+        foreach ($pending as $application) {
+            // 1) если такой email уже есть — запомним и пропустим
+            if (in_array($application->email, $existingEmails, true)) {
+                $skipped[] = $application->email;
+                // при этом мы можем отметить заявку, но обычно оставляем её на будущее
+                continue;
+            }
+
+            // 2) создаём пользователя
             $randomPassword = Str::random(8);
-
             $user = User::create([
                 'first_name' => $application->name,
                 'email'      => $application->email,
@@ -72,12 +85,34 @@ class AdminRequestsController extends Controller
                 'password'   => Hash::make($randomPassword),
             ]);
 
+            // 3) если студент и есть lesson_id — привязываем его к уроку
+            if ($application->requested_role === 'student' && $application->lesson_id) {
+                $lesson = Lesson::find($application->lesson_id);
+                if ($lesson) {
+                    $lesson->students()->attach($user->id);
+                    $lesson->status = 'scheduled';
+                    $lesson->save();
+                }
+            }
+
+            // 4) помечаем заявку как обработанную
             $application->status = 'approved';
             $application->save();
 
-            Mail::to($application->email)->send(new AccountCreated($user, $randomPassword));
+            // 5) отправляем письмо
+            Mail::to($application->email)
+                ->send(new AccountCreated($user, $randomPassword));
         }
 
-        return redirect()->back()->with('success', 'Все заявки обработаны и личные кабинеты созданы.');
+        // 6) подготавливаем флеш-сообщения
+        $message = 'Все новые заявки обработаны.';
+        if (count($skipped)) {
+            $message .= ' Пропущены, т.к. уже зарегистрированы: ' . implode(', ', array_unique($skipped)) . '.';
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', $message);
     }
+
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\FeedbackMail;
+use App\Models\FreeLessonRequest;
 use App\Models\Lesson;
 use App\Models\Timetable;
 use App\Models\User;
@@ -25,20 +26,34 @@ class MainController extends Controller
         ]);
     }
 
-//    Метод для получения языков в форму бесплатной заявки
     public function index()
     {
         // 1) Все языки
         $languages = Language::all();
 
-        // 2) Сгенерированные “тестовые” уроки, начиная со следующего дня
+        // 2) Собираем список уже занятых уроков
+        $usedLessonIds = FreeLessonRequest::query()
+            ->whereNotNull('lesson_id')
+            ->pluck('lesson_id')
+            ->toArray();
+
+        // 3) Определяем границы: от завтра до +2 недель
+        $start = Carbon::tomorrow()->toDateString();
+        $end   = Carbon::today()->addWeeks(2)->toDateString();
+
+        // 4) Берём тестовые уроки в этом диапазоне, исключая занятые
         $testLessons = Lesson::with('timetable')
             ->where('type', 'test')
             ->where('status', 'scheduled')
-            ->where('date', '>=', Carbon::tomorrow()->toDateString())
+            ->whereBetween('date', [$start, $end])
+            ->when(count($usedLessonIds), fn($q) =>
+            $q->whereNotIn('lessons.id', $usedLessonIds)
+            )
+            ->orderBy('date')
+            ->orderBy('time')
             ->get();
 
-        // 3) Формируем availableDates и timeSlots
+        // 5) Формируем availableDates и timeSlots
         $availableDates = [];
         $timeSlots      = [];
 
@@ -46,23 +61,26 @@ class MainController extends Controller
             $dateKey = $lesson->date->format('Y-m-d');
             $availableDates[$dateKey] = $lesson->date->translatedFormat('d M Y (D)');
 
-            $start = Carbon::parse($lesson->time);
-            $end   = $start->copy()->addMinutes($lesson->timetable->duration);
+            $startTime = Carbon::parse($lesson->time);
+            $endTime   = $startTime->copy()->addMinutes($lesson->timetable->duration);
 
             $timeSlots[$dateKey][] = [
                 'id'         => $lesson->id,
-                'start_time' => $start->format('H:i'),
-                'end_time'   => $end->format('H:i'),
+                'start_time' => $startTime->format('H:i'),
+                'end_time'   => $endTime->format('H:i'),
             ];
         }
 
-        // 4) Отдаём view 'main' вместе с тремя массивами
+        // 6) Отдаём view
         return view('main', [
             'languages'      => $languages,
             'availableDates' => $availableDates,
             'timeSlots'      => $timeSlots,
         ]);
     }
+
+
+
 
     public function sendContact(Request $request)
     {

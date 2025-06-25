@@ -18,29 +18,28 @@ class StudentTimetableController extends Controller
             : Carbon::now()->startOfWeek();
         $endOfWeek   = $startOfWeek->copy()->endOfWeek();
 
-        // Курсы студента (pluck с указанием таблицы)
-        $courseIds = $student->courses()
-            ->select('courses.id')
-            ->pluck('courses.id')
-            ->all();
+        // 1) Уроки по курсам студента
+        $courseIds = $student->courses()->pluck('courses.id')->all();
+        $byCourse  = Lesson::with(['course','teacher','students'])
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->whereIn('course_id', $courseIds);
 
-        // 1) Берём уроки за эту неделю по этим курсам
-        $lessons = Lesson::with(['course','teacher'])
-            ->whereBetween('date', [
-                $startOfWeek->toDateString(),
-                $endOfWeek->toDateString(),
-            ])
-            ->whereIn('course_id', $courseIds)
+        // 2) Тестовые уроки через pivot
+        $byPivot = Lesson::with(['course','teacher','students'])
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->whereHas('students', fn($q) => $q->where('user_id', $student->id));
+
+        // 3) Объединяем и сортируем
+        $lessons = $byCourse
+            ->union($byPivot->toBase())
             ->orderBy('date')
             ->orderBy('time')
             ->get();
 
-        // 2) Группируем по дате
-        $lessonsByDate = $lessons->groupBy(function($lesson) {
-            return Carbon::parse($lesson->date)->toDateString();
-        });
+        // 4) Группируем по дате
+        $lessonsByDate = $lessons->groupBy(fn($lesson) => $lesson->date->toDateString());
 
-        // 3) Дни для шапки
+        // Даты недели
         $days = collect(range(0,6))
             ->map(fn($i) => $startOfWeek->copy()->addDays($i)->toDateString());
 

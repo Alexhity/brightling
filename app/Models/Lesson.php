@@ -43,11 +43,15 @@ class Lesson extends Model
             ->withTimestamps();
     }
 
+
+    /**
+     * Студенты, записанные на этот урок
+     */
     public function students()
     {
         return $this->belongsToMany(
             User::class,
-            'user_lessons',
+            'lesson_user',
             'lesson_id',
             'user_id'
         )->withTimestamps();

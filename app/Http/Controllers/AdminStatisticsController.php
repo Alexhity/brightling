@@ -25,7 +25,7 @@ class AdminStatisticsController extends Controller
         ];
 
         // Получаем последних 5 пользователей
-        $recentUsers = User::orderBy('created_at', 'desc')->take(5)->get();
+        $recentUsers = User::orderBy('created_at', 'desc')->take(10)->get();
 
 
         return view('auth.admin.statistics', compact('stats', 'recentUsers'));
