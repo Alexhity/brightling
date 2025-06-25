@@ -1,19 +1,17 @@
-{{-- resources/views/auth/admin/prices/create.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
     <style>
         .admin-content-wrapper {
             margin-left: 200px;
-            font-family: 'Montserrat Medium', sans-serif;
             width: calc(100% - 200px);
+            font-family: 'Montserrat Medium', sans-serif;
         }
         .admin-content-wrapper h2 {
             font-family: 'Montserrat Bold', sans-serif;
             font-size: 32px;
             color: #333333;
-            margin-top: 25px;
-            margin-bottom: 15px;
+            margin: 30px 0;
             text-align: center;
         }
         .course-form {
@@ -22,112 +20,29 @@
             border-radius: 7px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             max-width: 600px;
-            margin: 40px auto;
+            margin: 0 auto 40px;
         }
-        .form-group {
-            position: relative;
-            margin-bottom: 6px;
-            padding-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 4px;
-            font-family: 'Montserrat SemiBold', sans-serif;
-            color: #333333;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            font-family: 'Montserrat Medium', sans-serif;
-            border: 1px solid #cccccc;
-            border-radius: 5px;
-            transition: border-color 0.2s;
-            background-color: #ffffff;
-        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 4px; }
+        .form-group input,
         .form-group select {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            font-family: 'Montserrat Medium', sans-serif;
-            border: 1px solid #cccccc;
-            border-radius: 5px;
-            transition: border-color 0.2s;
-            background-color: #ffffff;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'><path fill='%23666' d='M2 4l4 4 4-4z'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;
+            font-family: 'Montserrat Medium', sans-serif; font-size: 14px;
+            transition: border-color .2s;
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            font-size: 14px; color: #999; opacity: 1;
         }
         .form-group input:focus,
         .form-group select:focus {
-            outline: none;
-            border-color: #615f5f;
+            outline: none; border-color: #615f5f;
         }
-        .input-error {
-            border-color: #ff4c4c !important;
-        }
-        .error {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            font-size: 13px;
-            color: #ff4c4c;
-            font-family: 'Montserrat Medium', sans-serif;
-        }
-        .buttons {
-            margin-top: 12px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-        .btn-submit {
-            background-color: #beffe6;
-            color: #333333;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-family: 'Montserrat Medium', sans-serif;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-decoration: none;
-        }
-        .btn-submit:hover {
-            background-color: #93edca;
-        }
-        .btn-cancel {
-            background-color: #f0f0f0;
-            color: #333333;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-family: 'Montserrat Medium', sans-serif;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-cancel:hover {
-            background-color: #d9d9d9;
-        }
-        .alert-success {
-            background-color: #e6f7e6;
-            color: #2e7d32;
-            padding: 12px 20px;
-            margin-bottom: 30px;
-            border: 1px solid #c8e6c9;
-            border-radius: 7px;
-            font-family: 'Montserrat Medium', sans-serif;
-            font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
+        .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+        .btn-submit { background: #beffe6; padding: 10px 20px; border: none; border-radius: 7px; cursor: pointer; }
+        .btn-submit:hover { background: #93edca; }
+        .btn-cancel { background: #f0f0f0; padding: 10px 20px; border-radius: 7px; text-decoration: none; }
+        .required::after { content: " *"; color: #ff4c4c; }
     </style>
 @endsection
 
@@ -136,53 +51,62 @@
     <div class="admin-content-wrapper">
         <h2>Создать тариф</h2>
 
-        @if(session('success'))
-            <div class="alert-success">{{ session('success') }}</div>
+        {{-- Validation errors (5s toast) --}}
+        @if($errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const list = @json($errors->all()).map(e => `<li>${e}</li>`).join('');
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false, timer: 5000, timerProgressBar: true,
+                    });
+                });
+            </script>
         @endif
 
-        <form action="{{ route('admin.prices.store') }}" method="POST" class="course-form" novalidate>
+        {{-- Success message (3s toast) --}}
+        @if(session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: @json(session('success')),
+                        showConfirmButton: false, timer: 3000, timerProgressBar: true,
+                    });
+                });
+            </script>
+        @endif
+
+        <form action="{{ route('admin.prices.store') }}" method="POST" class="course-form" id="price-create-form" novalidate>
             @csrf
 
             <div class="form-group">
-                <label for="name">Название</label>
-                <input id="name" name="name" type="text" value="{{ old('name') }}" required class="{{ $errors->has('name') ? 'input-error' : '' }}" >
-                @if($errors->has('name'))
-                    @php $firstNameError = $errors->first('name'); @endphp
-                    <div class="error">
-                        {{ str_contains($firstNameError, 'уже существует')
-                            ? 'Тариф с данным названием уже существует'
-                            : 'Введите название тарифа.'
-                        }}
-                    </div>
-                @endif
+                <label for="name" class="required">Название тарифа</label>
+                <input id="name" name="name" type="text" placeholder="Введите название"
+                       value="{{ old('name') }}" required>
             </div>
 
             <div class="form-group">
-                <label for="lesson_duration">Длительность (мин)</label>
-                <input id="lesson_duration" name="lesson_duration" type="number" value="{{ old('lesson_duration') }}" required class="{{ $errors->has('lesson_duration') ? 'input-error' : '' }}">
-                @if($errors->has('lesson_duration'))
-                    <div class="error">Укажите длительность урока</div>
-                @endif
+                <label for="lesson_duration" class="required">Длительность (мин)</label>
+                <input id="lesson_duration" name="lesson_duration" type="number" placeholder="Минуты"
+                       value="{{ old('lesson_duration') }}" required>
             </div>
 
             <div class="form-group">
-                <label for="unit_price">Цена за урок, BYN</label>
-                <input id="unit_price" name="unit_price" type="number" step="0.01" value="{{ old('unit_price') }}" required class="{{ $errors->has('unit_price') ? 'input-error' : '' }}">
-                @if($errors->has('unit_price'))
-                    <div class="error">Введите цену за урок</div>
-                @endif
+                <label for="unit_price" class="required">Цена за урок, BYN</label>
+                <input id="unit_price" name="unit_price" type="number" step="0.01" placeholder="0.00"
+                       value="{{ old('unit_price') }}" required>
             </div>
 
             <div class="form-group">
-                <label for="format">Формат</label>
-                <select id="format" name="format" required class="{{ $errors->has('format') ? 'input-error' : '' }}">
-                    <option value="" disabled {{ old('format') ? '' : 'selected' }}>Выберите формат</option>
-                    <option value="individual" {{ old('format')=='individual' ? 'selected' : '' }}>Индивидуальный</option>
-                    <option value="group" {{ old('format')=='group' ? 'selected' : '' }}>Групповой</option>
+                <label for="format" class="required">Формат</label>
+                <select id="format" name="format" required>
+                    <option value="" disabled {{ old('format')?'':'selected' }}>Выберите формат</option>
+                    <option value="individual" {{ old('format')=='individual'?'selected':'' }}>Индивидуальный</option>
+                    <option value="group"      {{ old('format')=='group'     ?'selected':'' }}>Групповой</option>
                 </select>
-                @if($errors->has('format'))
-                    <div class="error">Выберите формат занятия</div>
-                @endif
             </div>
 
             <div class="buttons">
@@ -191,4 +115,32 @@
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('price-create-form');
+
+            form.addEventListener('submit', e => {
+                const errs = [],
+                    dur = form.lesson_duration.value,
+                    price = form.unit_price.value,
+                    fmt = form.format.value,
+                    name = form.name.value.trim();
+                if(!name) errs.push('Введите название тарифа.');
+                if(!dur || dur <= 0) errs.push('Укажите корректную длительность.');
+                if(!price || price <= 0) errs.push('Введите корректную цену.');
+                if(!fmt) errs.push('Выберите формат.');
+                if(errs.length){
+                    e.preventDefault();
+                    const list = errs.map(e=>`<li>${e}</li>`).join('');
+                    Swal.fire({
+                        toast:true,position:'top-end',icon:'error',
+                        title:'Ошибка валидации',
+                        html:`<ul style="text-align:left">${list}</ul>`,
+                        showConfirmButton:false,timer:5000,timerProgressBar:true
+                    });
+                }
+            });
+        });
+    </script>
 @endsection

@@ -1898,6 +1898,25 @@
                             <div class="error-message" data-for="language"></div>
                         </div>
 
+                        <div class="form-group">
+                            <select id="timetable_slot_id" name="timetable_slot_id">
+                                <option value="" disabled {{ old('timetable_slot_id') ? '' : 'selected' }}>
+                                    Выберите время урока
+                                </option>
+                                @foreach($testSlots as $slot)
+                                    <option value="{{ $slot->id }}" {{ old('timetable_slot_id') == $slot->id ? 'selected' : '' }}>
+                                        @if($slot->date)
+                                            {{ \Carbon\Carbon::parse($slot->date)->translatedFormat('d M Y') }}
+                                        @else
+                                            {{ ucfirst($slot->weekday) }} (регулярно)
+                                        @endif
+                                        {{ $slot->start_time }} - {{ \Carbon\Carbon::parse($slot->start_time)->addMinutes($slot->duration)->format('H:i') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="error-message" data-for="timetable_slot_id"></div>
+                        </div>
+
                         <button type="submit" class="btn">Хочу на урок</button>
 
                         <label class="checkbox">

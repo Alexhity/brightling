@@ -1,4 +1,4 @@
-{{-- resources/views/auth/admin/certificates/create.blade.php --}}
+{{-- resources/views/auth/admin/certificates/edit.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
@@ -126,50 +126,51 @@
     @include('layouts.left_sidebar_admin')
 
     <div class="admin-content-wrapper">
-        <h2>Добавить сертификат</h2>
+        <h2>Редактировать сертификат</h2>
 
         @if(session('success'))
             <div class="alert-success">{{ session('success') }}</div>
         @endif
 
-        <form action="{{ route('admin.certificates.store') }}" method="POST" class="cert-form" enctype="multipart/form-data" novalidate>
+        <form action="{{ route('admin.certificates.update', $certificate->id) }}" method="POST" class="cert-form" enctype="multipart/form-data" novalidate>
             @csrf
+            @method('PUT')
 
             <div class="form-group">
                 <label for="user_id">Пользователь</label>
-                <select name="user_id" id="user_id" class="@error('user_id') input-error @enderror">
+                <select name="user_id" id="user_id">
                     <option value="">— выберите пользователя —</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
+                        <option value="{{ $u->id }}" {{ old('user_id', $certificate->user_id) == $u->id ? 'selected' : '' }}>
                             {{ $u->first_name }} {{ $u->last_name }} ({{ $u->email }})
                         </option>
                     @endforeach
                 </select>
-                @error('user_id')<div class="error">{{ $message }}</div>@enderror
+
             </div>
 
             <div class="form-group">
                 <label for="title">Заголовок сертификата</label>
-                <input type="text" id="title" name="title" value="{{ old('title') }}" class="@error('title') input-error @enderror" required>
+                <input type="text" id="title" name="title" value="{{ old('title', $certificate->title) }}" class="@error('title') input-error @enderror" required>
                 @error('title')<div class="error">{{ $message }}</div>@enderror
             </div>
 
             <div class="form-group">
                 <label for="file">Файл сертификата (PDF/JPG/PNG)</label>
-                <input type="file" id="file" name="file" class="@error('file') input-error @enderror" required>
+                <input type="file" id="file" name="file" class="@error('file') input-error @enderror">
                 @error('file')<div class="error">{{ $message }}</div>@enderror
             </div>
 
             <div class="buttons">
                 <a href="{{ route('admin.certificates.index') }}" class="btn-cancel">Отмена</a>
-                <button type="submit" class="btn-submit">Сохранить</button>
+                <button type="submit" class="btn-submit">Обновить</button>
             </div>
         </form>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const errors = @json($errors->all());
-
             errors.forEach(msg => {
                 Swal.fire({
                     toast: true,
@@ -179,9 +180,7 @@
                     showConfirmButton: false,
                     timer: 5000,
                     timerProgressBar: true,
-                    customClass: {
-                        popup: 'swal2-toast'
-                    }
+                    customClass: { popup: 'swal2-toast' }
                 });
             });
         });

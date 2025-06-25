@@ -24,10 +24,6 @@ return new class extends Migration
                 ->constrained('languages')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->foreignId('timetable_id')
-                ->nullable()
-                ->constrained('timetables')
-                ->nullOnDelete();
 
             $table->timestamps();
         });

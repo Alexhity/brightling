@@ -10,44 +10,65 @@ class Timetable extends Model
 
 
     protected $fillable = [
-        'parent_id',
-        'course_id',
         'title',
-        'user_id',
-        'type',
         'weekday',
         'date',
-        'active',
-        'ends_at',
         'start_time',
         'duration',
-        'override_start_time',
-        'override_duration',
-        'override_user_id',
-        'cancelled',
+        'type',
+        'active',
+        'course_id',
         'request_id',
+        'user_id',
+        'override_user_id',
+        'is_recurring',
+        'is_exception',
+        'exception_date',
+        'free_lesson_request_id',
+        'parent_id',
+        'cancelled',
+        'ends_at'
     ];
 
+//    protected $casts = [
+//        'issued_at'              => 'date',
+//        'start_time'        => 'datetime:H:i',
+//        'enrollment_status' => 'datetime',
+//        'active'            => 'boolean',
+//    ];
     protected $casts = [
-        'issued_at'              => 'date',
-        'start_time'        => 'datetime:H:i',
-        'enrollment_status' => 'datetime',
-        'active'            => 'boolean',
+        'date' => 'datetime:H:i',
+        'active' => 'boolean',
+        'cancelled' => 'boolean',
+        'is_recurring' => 'boolean',
+        'is_exception' => 'boolean',
+        'exception_date' => 'date',
     ];
 
 
-    const TYPE_GROUP = 'group';
-    const TYPE_INDIVIDUAL = 'individual';
-    const TYPE_TEST = 'test';
+//    const TYPE_GROUP = 'group';
+//    const TYPE_INDIVIDUAL = 'individual';
+//    const TYPE_TEST = 'test';
 
 
     public static function lessonTypes()
     {
-        return [
-            self::TYPE_GROUP => 'Групповое',
-            self::TYPE_INDIVIDUAL => 'Индивидуальное',
-            self::TYPE_TEST => 'Тестовый урок',
-        ];
+        return ['group', 'individual', 'test'];
+
+//        return [
+//            self::TYPE_GROUP => 'Групповое',
+//            self::TYPE_INDIVIDUAL => 'Индивидуальное',
+//            self::TYPE_TEST => 'Тестовый урок',
+//        ];
+    }
+
+    // В модели Timetable
+    public function statusBadge()
+    {
+        if ($this->request_id) {
+            return '<span class="badge bg-warning">Зарезервирован</span>';
+        }
+        return '<span class="badge bg-success">Свободен</span>';
     }
 
 
@@ -86,7 +107,7 @@ class Timetable extends Model
     }
 
     // Связь: если этот слот был создан из заявки
-    public function freeRequest()
+    public function freeLessonRequest()
     {
         return $this->belongsTo(FreeLessonRequest::class, 'request_id');
     }
@@ -98,6 +119,24 @@ class Timetable extends Model
     public function lessons()
     {
         return $this->hasMany(Lesson::class, 'timetable_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Timetable::class, 'parent_id');
+    }
+
+    public function exceptions()
+    {
+        return $this->hasMany(Timetable::class, 'parent_id');
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function (Timetable $slot) {
+            // Удаляем все уроки этого слота
+            $slot->lessons()->delete();
+        });
     }
 
 //    // Расписание

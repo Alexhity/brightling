@@ -1,4 +1,4 @@
-{{-- resources/views/auth/teacher/profile/edit.blade.php --}}
+{{-- resources/views/auth/teacher/profile/edit-slot.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
@@ -120,6 +120,40 @@
             background: #93edca;
         }
         /* Override базовых стилей Tom Select */
+        .ts-control {
+            background-color: #f0f8ff;
+            border-radius: 5px;
+        }
+        .ts-control .ts-dropdown {
+            border-radius: 0 0 5px 5px;
+        }
+        .ts-control .ts-dropdown .ts-option.ts-selected {
+            background-color: #93edca;
+        }
+
+        /* Сетка сертификатов: ровно 3 колонки */
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .cert-item {
+            text-align: center;
+        }
+        .cert-title {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        /* Картинка 3:2 */
+        .cert-image {
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        /* Tom Select overrides */
         .ts-control {
             background-color: #f0f8ff;
             border-radius: 5px;
@@ -347,24 +381,26 @@
                 </form>
             </div>
 
-{{--            --}}{{-- Сертификаты --}}
-{{--            <div class="profile-form">--}}
-{{--                <h2>Сертификаты</h2>--}}
-{{--                @if($certificates->isEmpty())--}}
-{{--                    <p class="about-text">Нет сертификатов</p>--}}
-{{--                @else--}}
-{{--                    <ul class="cert-list">--}}
-{{--                        @foreach($certificates as $cert)--}}
-{{--                            <li>--}}
-{{--                                <a href="{{ asset('storage/' . $cert->file_path) }}"--}}
-{{--                                   target="_blank">--}}
-{{--                                    {{ $cert->title }}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                        @endforeach--}}
-{{--                    </ul>--}}
-{{--                @endif--}}
-{{--            </div>--}}
+                {{-- Сертификаты --}}
+                <div class="profile-form">
+                    <h2>Сертификаты</h2>
+                    @if($certificates->isEmpty())
+                        <p class="about-text">Нет сертификатов</p>
+                    @else
+                        <div class="certificates-grid">
+                            @foreach($certificates as $cert)
+                                <div class="cert-item">
+                                    <h3 class="cert-title">{{ $cert->title }}</h3>
+                                    <a href="{{ asset('images/certificates/' . $cert->file_path) }}" target="_blank">
+                                        <img src="{{ asset('images/certificates/' . $cert->file_path) }}"
+                                             alt="{{ $cert->title }}"
+                                             class="cert-image">
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
         </div>
 
         {{-- Правая панель --}}
@@ -392,12 +428,12 @@
     </div>
 @endsection
 
-@section('scripts')
-    @vite('resources/js/app.js')
+{{--@section('scripts')--}}
+{{--    @vite('resources/js/app.js')--}}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Если вдруг нужно кастомное поведение
-        });
-    </script>
-@endsection
+{{--    <script>--}}
+{{--        document.addEventListener('DOMContentLoaded', () => {--}}
+{{--            // Если вдруг нужно кастомное поведение--}}
+{{--        });--}}
+{{--    </script>--}}
+{{--@endsection--}}

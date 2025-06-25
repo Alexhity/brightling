@@ -82,7 +82,10 @@ class AdminCoursesController extends Controller
 
     public function store(Request $request)
     {
+
+
         $data = $request->validate([
+
             'title'         => 'required|string|max:255',
         'description'   => 'nullable|string',
         'language_id'   => 'required|exists:languages,id',
@@ -108,9 +111,11 @@ class AdminCoursesController extends Controller
         if (!empty($data['timetables'])) {
             foreach ($data['timetables'] as $slot) {
                 $slot['active'] = !empty($slot['active']);
+                $slot['ends_at'] = $course->duration;
                 $course->timetables()->create($slot);
             }
         }
+
 
         return redirect()->route('admin.courses.index')
             ->with('success', "Курс «{$course->title}» успешно создан.");
@@ -160,11 +165,9 @@ class AdminCoursesController extends Controller
             'timetables.*.user_id'   => 'required|exists:users,id',
             'timetables.*.active'    => 'sometimes|boolean',
         ];
-        logger()->info('before');
         // Теперь вызываем валидацию
         $data = $request->validate($rules);
 
-        logger()->info('after');
         // Обновляем курс
         $course->update([
             'title'         => $data['title'],
@@ -176,7 +179,7 @@ class AdminCoursesController extends Controller
             'age_group'     => $data['age_group'] ?? null,
             'lessons_count' => $data['lessons_count'],
             'duration'      => $data['duration'] ?? null,
-            'status'        => $data['status'],
+            'status'        => $data['status']
         ]);
 
         // Синхронизация слотов
@@ -198,6 +201,7 @@ class AdminCoursesController extends Controller
                     'type'       => $slot['type'],
                     'user_id'    => $slot['user_id'],
                     'active'     => $slot['active'],
+                    'ends_at'    => $course->duration,
                 ]);
             } else {
                 Timetable::create([
@@ -208,7 +212,8 @@ class AdminCoursesController extends Controller
                     'type'       => $slot['type'],
                     'user_id'    => $slot['user_id'],
                     'active'     => $slot['active'],
-                    'course_id' => $course['id']
+                    'course_id' => $course['id'],
+                    'ends_at'    => $course->duration
                 ]);
 //                $course->timetables()->create([
 //                    'weekday'    => $slot['weekday'] ?? null,
@@ -231,9 +236,14 @@ class AdminCoursesController extends Controller
 
     public function destroy(Course $course)
     {
+        // Удаляем все слоты, привязанные к этому курсу
+        $course->timetables()->delete();
+
+        // Теперь можно удалить сам курс
         $course->delete();
+
         return redirect()->route('admin.courses.index')
-            ->with('success',"Курс «{$course->title}» удалён.");
+            ->with('success', "Курс «{$course->title}» удалён.");
     }
 
     /**

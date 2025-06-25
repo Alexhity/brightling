@@ -17,7 +17,7 @@ class StudentProfileController extends Controller
             ->unique()
             ->values();
 
-        $certificates = $user->certificates;
+        $certificates = $user->certificates; // связь hasMany
 
         return view('auth.student.profile.edit', compact('user','languages','certificates'));
     }

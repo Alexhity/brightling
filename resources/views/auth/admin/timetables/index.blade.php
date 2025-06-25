@@ -129,6 +129,38 @@
             background-color: #f8f9fa;
         }
 
+        .slot-ends-at {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+         .btn-delete {
+             display: inline-block;
+             font-size: 13px;
+             color: #e74c3c;
+             text-decoration: underline;
+             cursor: pointer;
+             margin-top: 5px;
+             margin-left: 10px;
+             background: none;
+             border: none;
+             padding: 0;
+         }
+
+        .btn-delete:hover {
+            color: #c0392b;
+            text-decoration: none;
+        }
+
+        .slot-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #ddd;
+        }
+
+
     </style>
 @endsection
 
@@ -138,7 +170,10 @@
         <div class="header-row">
             <div class="grid">
                 <h2>Расписание</h2>
-                <a href="{{ route('admin.timetables.index') }}" class="btn-create">Текущая неделя</a>
+                <div>
+                    <a href="{{ route('admin.timetables.create-slot') }}" class="btn-create">+ Создать слот</a>
+                    <a href="{{ route('admin.timetables.index') }}" class="btn-create">Текущая неделя</a>
+                </div>
             </div>
 
 
@@ -186,6 +221,22 @@
                         $dateKey = $day->toDateString();
                         $daySlots = $groupedSlots->get($dateKey, collect());
 
+                          // ФИЛЬТРАЦИЯ: Скрываем основные слоты, для которых есть исключения
+                            $filteredSlots = $daySlots->reject(function ($slot) use ($daySlots) {
+                                // Для основных слотов проверяем наличие исключений
+                                if (!$slot->parent_id) {
+                                    return $daySlots->contains(function ($s) use ($slot) {
+                                        return $s->parent_id == $slot->id && $s->date == $slot->date;
+                                    });
+                                }
+                                return false;
+                            });
+
+                            // Сортируем ОТФИЛЬТРОВАННЫЕ слоты
+                            $sortedDaySlots = $filteredSlots->sortBy(function ($slot) {
+                                return \Carbon\Carbon::parse($slot->start_time);
+                            });
+
                         // Сортируем слоты по времени
                         $sortedDaySlots = $daySlots->sortBy(function ($slot) {
                             return \Carbon\Carbon::parse($slot->start_time);
@@ -196,7 +247,7 @@
                         $afternoonSlots = [];
                         $eveningSlots = [];
 
-                        foreach ($sortedDaySlots as $slot) {
+                        foreach ($sortedDaySlots  as $slot) {
                             $hour = \Carbon\Carbon::parse($slot->start_time)->hour;
 
                             if ($hour < 12) {
@@ -208,13 +259,12 @@
                             }
                         }
 
-                        
-
                     @endphp
 
                     <td>
                         {{-- Утренние слоты (до 12:00) --}}
                         @if (count($morningSlots))
+                            @continue(\Carbon\Carbon::parse($slot->created_at)->startOfDay() > $day)
                             <div class="time-period-header">Утро</div>
                             @foreach ($morningSlots as $slot)
                                 @php
@@ -223,17 +273,21 @@
                                     $isCancelled = $slot->cancelled ?? false;
                                     $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
                                     $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
+
+
                                 @endphp
 
                                 <div class="slot slot-morning @if(!$slot->active || $isCancelled) slot--inactive @endif">
                                     <div class="slot-header">
                                         <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
                                         <div>
-                                            @if($isException)
-                                                <span class="slot-status status-modified">Изменено</span>
-                                            @endif
                                             @if($isCancelled)
                                                 <span class="slot-status status-cancelled">Отменено</span>
+                                            @else
+                                                @if($isException)
+                                                    <span class="slot-status status-modified">Изменено</span>
+                                                @endif
+
                                             @endif
                                         </div>
                                     </div>
@@ -247,12 +301,37 @@
                                             {{ $teacher->first_name }} {{ $teacher->last_name }}
                                         </div>
                                     @endif
+                                    {{-- Внутри блока .slot после вывода информации о преподавателе --}}
+                                    {{-- Разрешаем редактирование для всех слотов, кроме полностью неактивных --}}
+                                    @if($slot->active || $isCancelled)
+                                        <div class="slot-actions">
+                                            @if(!$isCancelled && $slot->active)
+                                                <a href="{{ route('admin.timetables.edit-slot', ['timetable' => $baseSlot->id, 'date' => $dateKey]) }}"
+                                                   class="btn-edit">
+                                                    Редактировать
+                                                </a>
+                                            @endif
+
+                                            {{-- Добавляем кнопку удаления для регулярных слотов --}}
+                                            @if(is_null($slot->course_id) && is_null($slot->parent_id))
+                                                <form action="{{ route('admin.timetables.destroy-slot', $slot) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn-delete"
+                                                            onclick="return confirm('Вы уверены, что хотите удалить этот слот?')">
+                                                        Удалить
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         @endif
 
                         {{-- Дневные слоты (12:00-17:00) --}}
                         @if (count($afternoonSlots))
+                            @continue(\Carbon\Carbon::parse($slot->created_at)->startOfDay() > $day)
                             <div class="time-period-header">День</div>
                             @foreach ($afternoonSlots as $slot)
                                 @php
@@ -266,11 +345,98 @@
                                     <div class="slot-header">
                                         <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
                                         <div>
-                                            @if($isException)
-                                                <span class="slot-status status-modified">Изменено</span>
+                                            <div>
+                                                @if($isCancelled)
+                                                    <span class="slot-status status-cancelled">Отменено</span>
+                                                @else
+                                                    @if($isException)
+                                                        <span class="slot-status status-modified">Изменено</span>
+                                                    @endif
+
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
+                                        ({{ $slot->duration }} мин)
+                                    </div>
+
+                                    @if($teacher)
+                                        <div>
+                                            Преподаватель:
+                                            {{ $teacher->first_name }} {{ $teacher->last_name }}
+                                        </div>
+                                    @endif
+
+{{--                                    <!-- Добавляем отображение даты окончания -->--}}
+{{--                                    @if($slot->ends_at)--}}
+{{--                                        <div class="slot-ends-at">--}}
+{{--                                            Действует до: {{ \Illuminate\Support\Carbon::parse($slot->ends_at)->format('d.m.Y') }}--}}
+{{--                                        </div>--}}
+{{--                                    @endif--}}
+
+                                    @if($slot->active || $isCancelled)
+                                        <div class="slot-actions">
+                                            {{-- Всегда показываем "Редактировать" при активном слоте --}}
+                                            @if($slot->active)
+                                                <a href="{{ route('admin.timetables.edit-slot', ['timetable' => $baseSlot->id, 'date' => $dateKey]) }}"
+                                                   class="btn-edit">
+                                                    Редактировать
+                                                </a>
                                             @endif
+
+                                            {{-- Удаление — только для слотов без привязки к курсу и родительскому слоту --}}
+                                            @if(is_null($slot->course_id) && is_null($slot->parent_id))
+                                                <form action="{{ route('admin.timetables.destroy-slot', $slot) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn-delete"
+                                                            onclick="return confirm('Вы уверены, что хотите удалить этот слот?')">
+                                                        Удалить
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+
+                        {{-- Вечерние слоты (после 17:00) --}}
+                        @if (count($eveningSlots))
+                            @continue(\Carbon\Carbon::parse($slot->created_at)->startOfDay() > $day)
+                            <div class="time-period-header">Вечер</div>
+                        @php
+//                        $b = [];
+                        @endphp
+                            @foreach ($eveningSlots as $slot)
+                                @php
+                                    $isException = isset($slot->parent_id) && $slot->parent_id !== null;
+                                    $isCancelled = $slot->cancelled ?? false;
+                                    $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
+                                    $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
+//                                    if(count($slot->exceptions) > 0 && ($b[$slot->id] ?? 0) >= count($slot->exceptions))
+//                                    {
+//                                        $isCancelled = true;
+//                                    }
+//                                    if($isException){
+//                                        $b[$slot->parent_id] = ($b[$slot->parent_id] ?? 0) + 1;
+//                                    }
+                                @endphp
+
+                                <div class="slot slot-evening @if(!$slot->active || $isCancelled) slot--inactive @endif">
+                                    <div class="slot-header">
+                                        <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
+                                        <div>
                                             @if($isCancelled)
                                                 <span class="slot-status status-cancelled">Отменено</span>
+                                            @else
+                                                @if($isException)
+                                                    <span class="slot-status status-modified">Изменено</span>
+                                                @endif
+
                                             @endif
                                         </div>
                                     </div>
@@ -284,41 +450,29 @@
                                             {{ $teacher->first_name }} {{ $teacher->last_name }}
                                         </div>
                                     @endif
-                                </div>
-                            @endforeach
-                        @endif
-
-                        {{-- Вечерние слоты (после 17:00) --}}
-                        @if (count($eveningSlots))
-                            <div class="time-period-header">Вечер</div>
-                            @foreach ($eveningSlots as $slot)
-                                @php
-                                    $isException = isset($slot->parent_id) && $slot->parent_id !== null;
-                                    $isCancelled = $slot->cancelled ?? false;
-                                    $teacher = $slot->overrideTeacher ?? $slot->teacher ?? null;
-                                    $baseSlot = $isException ? ($slot->parent ?? $slot) : $slot;
-                                @endphp
-
-                                <div class="slot slot-evening @if(!$slot->active || $isCancelled) slot--inactive @endif">
-                                    <div class="slot-header">
-                                        <strong>{{ $baseSlot->course->title ?? ($baseSlot->title ?? 'Без названия') }}</strong>
-                                        <div>
-                                            @if($isException)
-                                                <span class="slot-status status-modified">Изменено</span>
+                                    {{-- Внутри блока .slot после вывода информации о преподавателе --}}
+                                    {{-- Разрешаем редактирование для всех слотов, кроме полностью неактивных --}}
+                                    @if($slot->active || $isCancelled)
+                                        <div class="slot-actions">
+                                            {{-- Всегда показываем "Редактировать" при активном слоте --}}
+                                            @if($slot->active)
+                                                <a href="{{ route('admin.timetables.edit-slot', ['timetable' => $baseSlot->id, 'date' => $dateKey]) }}"
+                                                   class="btn-edit">
+                                                    Редактировать
+                                                </a>
                                             @endif
-                                            @if($isCancelled)
-                                                <span class="slot-status status-cancelled">Отменено</span>
+
+                                            {{-- Удаление — только для слотов без привязки к курсу и родительскому слоту --}}
+                                            @if(is_null($slot->course_id) && is_null($slot->parent_id))
+                                                <form action="{{ route('admin.timetables.destroy-slot', $slot) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn-delete"
+                                                            onclick="return confirm('Вы уверены, что хотите удалить этот слот?')">
+                                                        Удалить
+                                                    </button>
+                                                </form>
                                             @endif
-                                        </div>
-                                    </div>
-                                    <div>
-                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}
-                                        ({{ $slot->duration }} мин)
-                                    </div>
-                                    @if($teacher)
-                                        <div>
-                                            Преподаватель:
-                                            {{ $teacher->first_name }} {{ $teacher->last_name }}
                                         </div>
                                     @endif
                                 </div>

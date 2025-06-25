@@ -7,9 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 class Lesson extends Model
 {
     protected $fillable = [
-    'zoom_link', 'date', 'time', 'topic',
-    'course_id', 'teacher_id', 'attendance','status'
-];
+    'zoom_link',
+        'date',
+        'time',
+        'topic',
+    'course_id',
+        'teacher_id',
+        'attendance',
+        'status',
+        'timetable_id',
+        'type',
+        'parent_lesson_id'
+    ];
 
     protected $casts = [
         'attendance' => 'array',

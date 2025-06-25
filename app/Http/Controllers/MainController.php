@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\FeedbackMail;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Language;
@@ -26,7 +27,8 @@ class MainController extends Controller
     public function index()
     {
         $languages = Language::all();
-        return view('main', compact('languages'));
+        $testSlots = Timetable::where('type', 'test') ->get();
+        return view('main', compact('languages', 'testSlots'));
     }
 
     public function sendContact(Request $request)

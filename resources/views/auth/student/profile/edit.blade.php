@@ -110,12 +110,33 @@
             text-decoration: none;
             margin-top: 10px;
             transition: background .3s;
+            text-align: center;
         }
         .btn-password:hover {
             background: #93edca;
         }
-        .cert-list { list-style:none; padding:0; }
-        .cert-list li { margin-bottom:8px; }
+        /* Сетка сертификатов: ровно 3 колонки */
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .cert-item {
+            text-align: center;
+        }
+        .cert-title {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        /* Картинка 3:2 */
+        .cert-image {
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 @endsection
 
@@ -123,7 +144,7 @@
     @include('layouts.left_sidebar_student')
 
     <div class="student-content-wrapper">
-        {{-- Левая колонка --}}
+        {{-- Левая колонка с формами --}}
         <div class="profile-main">
             @if(session('success'))
                 <script>
@@ -139,6 +160,7 @@
                 </script>
             @endif
 
+            {{-- Редактирование профиля --}}
             <div class="profile-form">
                 <h2>Редактировать профиль</h2>
                 <form action="{{ route('student.profile.update') }}"
@@ -147,8 +169,6 @@
                       novalidate>
                     @csrf
                     @method('PATCH')
-
-                    {{-- Имя + Фамилия --}}
                     <div class="form-row">
                         <div class="form-group">
                             <label>Имя</label>
@@ -168,7 +188,6 @@
                         </div>
                     </div>
 
-                    {{-- Email + Телефон --}}
                     <div class="form-row">
                         <div class="form-group">
                             <label>Email</label>
@@ -188,7 +207,6 @@
                         </div>
                     </div>
 
-                    {{-- Дата рождения --}}
                     <div class="form-group">
                         <label>Дата рождения</label>
                         <input type="date"
@@ -209,8 +227,7 @@
                                            class="form-control-plaintext">
                                 </div>
                                 <div class="form-group" style="flex:1">
-                                    <select disabled
-                                            class="form-control">
+                                    <select disabled class="form-control">
                                         <option>{{ strtoupper($lang->pivot->level ?? '—') }}</option>
                                     </select>
                                 </div>
@@ -218,16 +235,6 @@
                         @endforeach
                     </div>
 
-
-                    {{--                    --}}{{-- О себе --}}
-{{--                    <div class="form-group">--}}
-{{--                        <label>О себе</label>--}}
-{{--                        <textarea name="description" rows="4"--}}
-{{--                                  class="@error('description') input-error @enderror">{{ old('description',$user->description) }}</textarea>--}}
-{{--                        @error('description')<div class="error">{{ $message }}</div>@enderror--}}
-{{--                    </div>--}}
-
-                    {{-- Загрузка фото --}}
                     <div class="form-group">
                         <label>Загрузить фото</label>
                         <input type="file"
@@ -241,23 +248,27 @@
                 </form>
             </div>
 
-{{--            --}}{{-- Сертификаты --}}
-{{--            <div class="profile-form">--}}
-{{--                <h2>Сертификаты</h2>--}}
-{{--                @if($certificates->isEmpty())--}}
-{{--                    <p class="about-text">Нет сертификатов</p>--}}
-{{--                @else--}}
-{{--                    <ul class="cert-list">--}}
-{{--                        @foreach($certificates as $cert)--}}
-{{--                            <li>--}}
-{{--                                <a href="{{ asset('storage/'.$cert->file_path) }}" target="_blank">--}}
-{{--                                    {{ $cert->title }}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                        @endforeach--}}
-{{--                    </ul>--}}
-{{--                @endif--}}
-{{--            </div>--}}
+            {{-- Блок сертификатов --}}
+            <div class="profile-form">
+                <h2>Сертификаты</h2>
+
+                @if($certificates->isEmpty())
+                    <p class="about-text">Нет сертификатов</p>
+                @else
+                    <div class="certificates-grid">
+                        @foreach($certificates as $cert)
+                            <div class="cert-item">
+                                <h3 class="cert-title">{{ $cert->title }}</h3>
+                                <a href="{{ asset('images/certificates/' . $cert->file_path) }}" target="_blank">
+                                    <img src="{{ asset('images/certificates/' . $cert->file_path) }}"
+                                         alt="{{ $cert->title }}"
+                                         class="cert-image">
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         </div>
 
         {{-- Правая панель --}}
@@ -265,19 +276,16 @@
             <div class="sidebar-section">
                 <h2>Аватар</h2>
                 @if($user->file_path)
-                    <img src="{{ asset('images/profile/'.$user->file_path) }}"
+                    <img src="{{ asset('images/profile/' . $user->file_path) }}"
                          alt="Avatar" class="avatar-preview">
                 @else
                     <p class="about-text">Нет фото</p>
                 @endif
             </div>
 
-            <a href="{{ route('student.profile.password.show') }}"
-               class="btn-password"
-            style="text-align: center">
+            <a href="{{ route('student.profile.password.show') }}" class="btn-password">
                 Сменить пароль
             </a>
-
         </div>
     </div>
 @endsection

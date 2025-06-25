@@ -154,6 +154,14 @@
         .lang-form button.btn-create {
             margin-left: 8px;
         }
+
+        /* Вот только placeholder в 14px */
+        .lang-form input::placeholder,
+        .inline-edit-form input::placeholder {
+            font-size: 14px;
+            color: #999999;
+            opacity: 1;
+        }
     </style>
 @endsection
 
@@ -163,25 +171,62 @@
     <div class="admin-content-wrapper">
         <h2>Управление языками</h2>
 
+        {{-- Toast успеха и ошибки (3 сек для успеха) --}}
+        @if(session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: @json(session('success')),
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                });
+            </script>
+        @endif
+        @if(session('error'))
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: @json(session('error')),
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                });
+            </script>
+        @endif
+
         {{-- Форма добавления нового языка --}}
         <div class="lang-form">
-            <form action="{{ route('admin.languages.index') }}" method="GET" class="d-none">
-                {{-- для сортировки --}}
-            </form>
-            <form action="{{ route('admin.languages.create') }}" method="POST">
+            <form action="{{ route('admin.languages.create') }}"
+                  method="POST"
+                  novalidate
+                  id="lang-create-form">
                 @csrf
-                <input type="text" name="name" placeholder="Введите название нового языка" required>
+                <input type="text"
+                       name="name"
+                       placeholder="Введите название нового языка"
+                       value="{{ old('name') }}"
+                       required>
                 <button type="submit" class="btn-create">+ Добавить язык</button>
             </form>
         </div>
 
-        {{-- Список языков с возможностью инлайн‑редактирования --}}
+        {{-- Список языков --}}
         <div class="lang-list">
             <table class="languages">
                 <thead>
                 <tr>
                     <th>
-                        <a href="{{ route('admin.languages.index', ['sort' => 'name', 'dir' => ($sort == 'name' && $dir == 'asc') ? 'desc' : 'asc']) }}" class="sortable">
+                        <a href="{{ route('admin.languages.index', ['sort' => 'name', 'dir' => ($sort == 'name' && $dir == 'asc') ? 'desc' : 'asc']) }}"
+                           class="sortable">
                             Название
                             @if($sort == 'name')
                                 <span class="arrow">{{ $dir == 'asc' ? '▲' : '▼' }}</span>
@@ -192,31 +237,65 @@
                 </tr>
                 </thead>
                 <tbody>
+                {{-- Если нет ни одного языка --}}
+                @if($languages->isEmpty())
+                    <tr>
+                        <td colspan="3">Языков пока нет</td>
+                    </tr>
+                @endif
+
                 @foreach($languages as $lang)
                     <tr>
                         <td>{{ $lang->name }}</td>
-                        <td colspan="2">
-                            <button type="button" class="table-action-btn table-action-edit edit-btn" data-id="{{ $lang->id }}">
+                        <td>
+                            <button type="button"
+                                    class="table-action-btn table-action-edit edit-btn"
+                                    data-id="{{ $lang->id }}">
                                 Редактировать
                             </button>
-                            <form action="{{ route('admin.languages.destroy', $lang->id) }}" method="POST" class="d-inline" data-delete-form data-language-name="{{ $lang->name }}">
+                        </td>
+                        <td>
+                            <form action="{{ route('admin.languages.destroy', $lang->id) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  data-delete-form
+                                  data-language-name="{{ $lang->name }}"
+                                  novalidate>
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="table-action-btn table-action-delete">Удалить</button>
+                                <button type="submit" class="table-action-btn table-action-delete">
+                                    Удалить
+                                </button>
                             </form>
                         </td>
                     </tr>
 
                     <tr class="edit-row" data-id="{{ $lang->id }}" style="display: none; background-color: #f9f9f9;">
                         <td colspan="3">
-                            <form action="{{ route('admin.languages.update', $lang->id) }}" method="POST" class="inline-edit-form" style="display: flex; align-items: center; gap: 8px;">
+                            <form action="{{ route('admin.languages.update', $lang->id) }}"
+                                  method="POST"
+                                  class="inline-edit-form"
+                                  novalidate
+                                  style="display: flex; align-items: center; gap: 8px;">
                                 @csrf
                                 @method('PUT')
                                 <label for="name-{{ $lang->id }}">Новое имя:</label>
-                                <input type="text" id="name-{{ $lang->id }}" name="name" value="{{ old('name', $lang->name) }}" placeholder="Новое название" required style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size:14px;">
+                                <input type="text"
+                                       id="name-{{ $lang->id }}"
+                                       name="name"
+                                       value="{{ old('name', $lang->name) }}"
+                                       placeholder="Новое название"
+                                       required
+                                       style="flex:1; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
 
-                                <button type="submit" class="table-action-btn table-action-save">Сохранить</button>
-                                <button type="button" class="table-action-btn table-action-delete cancel-btn" data-id="{{ $lang->id }}">Отмена</button>
+                                <button type="submit" class="table-action-btn table-action-save">
+                                    Сохранить
+                                </button>
+                                <button type="button"
+                                        class="table-action-btn table-action-delete cancel-btn"
+                                        data-id="{{ $lang->id }}">
+                                    Отмена
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -228,20 +307,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Toast об успехе
-            @if(session('success'))
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: @json(session('success')),
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-            });
-            @endif
-
-            // Подтверждение удаления через SweetAlert2
+            // Подтверждение удаления
             document.querySelectorAll('form[data-delete-form]').forEach(form => {
                 form.addEventListener('submit', e => {
                     e.preventDefault();
@@ -261,20 +327,54 @@
                 });
             });
 
-            // Инлайн‑редактирование
-            document.querySelectorAll('.edit-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    const id = button.dataset.id;
+            // Toggle inline-редактирование
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
                     const row = document.querySelector(`.edit-row[data-id="${id}"]`);
                     row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
                 });
             });
+            document.querySelectorAll('.cancel-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    document.querySelector(`.edit-row[data-id="${id}"]`).style.display = 'none';
+                });
+            });
 
-            document.querySelectorAll('.cancel-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    const id = button.dataset.id;
-                    const row = document.querySelector(`.edit-row[data-id="${id}"]`);
-                    if (row) row.style.display = 'none';
+            // Валидация создания
+            document.getElementById('lang-create-form').addEventListener('submit', function(e) {
+                const name = this.name.value.trim();
+                if (!name) {
+                    e.preventDefault();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Введите название языка.',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                    });
+                }
+            });
+
+            // Валидация inline-редактирования
+            document.querySelectorAll('.inline-edit-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const name = this.name.value.trim();
+                    if (!name) {
+                        e.preventDefault();
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'error',
+                            title: 'Введите новое название.',
+                            showConfirmButton: false,
+                            timer: 5000,
+                            timerProgressBar: true,
+                        });
+                    }
                 });
             });
         });

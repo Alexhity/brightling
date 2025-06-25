@@ -2,7 +2,7 @@
 
 @section('styles')
     <style>
-        .admin-content-wrapper{
+        .admin-content-wrapper {
             margin-left: 200px;
             width: calc(100% - 200px);
             font-family: 'Montserrat Medium', sans-serif;
@@ -14,10 +14,10 @@
             margin-top: 30px;
             margin-bottom: 30px;
         }
-        .header-row{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .btn-create {
             display: inline-block;
@@ -32,6 +32,10 @@
         }
         .btn-create:hover {
             background-color: #c4b6f3;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1rem;
         }
         table.users {
             width: 100%;
@@ -52,7 +56,10 @@
             font-family: 'Montserrat SemiBold', sans-serif;
             font-size: 16px;
         }
-        /* Header background row */
+
+        td{
+            font-size: 14px;
+        }
         .users thead tr {
             background: #e3effc;
         }
@@ -69,12 +76,6 @@
             transition: background 0.2s;
             text-decoration: none;
             color: #333333;
-        }
-        .users td {
-            font-family: 'Montserrat Medium', sans-serif;
-            color: #333333;
-            font-size: 14px;
-            padding: 12px 20px;
         }
         .table-action-edit {
             background: #f0f0f0;
@@ -95,32 +96,18 @@
             cursor: pointer;
             color: #333333;
         }
-        .extra-info-row td {
-            text-align: left;
-            background: #f9f9f9;
-            font-family: 'Montserrat Medium', sans-serif;
-            padding: 16px 20px;
-        }
     </style>
 @endsection
 
 @section('content')
     @include('layouts.left_sidebar_admin')
     <div class="admin-content-wrapper">
+        {{-- Toast удаления/ошибки --}}
+        @if(session('error'))
+            <script>document.addEventListener('DOMContentLoaded',()=>Swal.fire({toast:true,position:'top-end',icon:'error',title:@json(session('error')),showConfirmButton:false,timer:3000,timerProgressBar:true}));</script>
+        @endif
         @if(session('success'))
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: @json(session('success')),
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                    });
-                });
-            </script>
+            <script>document.addEventListener('DOMContentLoaded',()=>Swal.fire({toast:true,position:'top-end',icon:'success',title:@json(session('success')),showConfirmButton:false,timer:3000,timerProgressBar:true}));</script>
         @endif
 
         <div class="header-row">
@@ -128,83 +115,77 @@
             <a href="{{ route('admin.users.create') }}" class="btn-create">+ Создать пользователя</a>
         </div>
 
-
-        <table class="users">
-            <thead>
-            <tr>
-                <th></th>
-                <th>Имя</th>
-                <th>Фамилия</th>
-                <th>Email</th>
-                <th>Роль</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach($users as $user)
+        <div class="table-responsive">
+            <table class="users">
+                <thead>
                 <tr>
-                    <td><button class="expand-btn" onclick="toggleDetails(this)">+</button></td>
-                    <td>{{ $user->first_name }}</td>
-                    <td>{{ $user->last_name }}</td>
-                    <td>{{ $user->email }}</td>
-                    <td>{{ $user->role }}</td>
-                    <td>
-                        <a href="{{ route('admin.users.edit', $user) }}" class="table-action-btn table-action-edit">Редактировать</a>
-                        <form action="{{ route('admin.users.destroy', $user) }}"
-                              method="POST"
-                              data-delete-form
-                              data-user-name="{{ $user->first_name }} {{ $user->last_name }}"
-                              style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="table-action-btn table-action-delete">
-                                Удалить
-                            </button>
-                        </form>
-
-                    </td>
+                    <th></th><th>Имя</th><th>Фамилия</th><th>Email</th><th>Роль</th><th>Действия</th>
                 </tr>
-                <tr class="extra-info-row" style="display:none;">
-                    <td colspan="6">
-                        <strong>Телефон:</strong> {{ $user->phone ?? '—' }}<br>
-                        <strong>Дата рождения:</strong> {{ $user->date_birthday ?? '—' }}<br>
-                        <strong>Уровень:</strong> {{ $user->level ?? '—' }}<br>
-                        <strong>Описание:</strong> {{ $user->description ?? '—' }}
-                    </td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                @php
+                    $roleNames = ['admin'=>'Администратор','teacher'=>'Преподаватель','student'=>'Студент'];
+                @endphp
+                @foreach($users as $user)
+                    <tr
+                        data-email="{{ $user->email }}"
+                        data-role="{{ $roleNames[$user->role] ?? $user->role }}"
+                        data-phone="{{ $user->phone ?? '—' }}"
+                        data-birthday="{{ $user->date_birthday ?? '—' }}"
+                        data-description="{{ $user->description ?? '—' }}"
+                    >
+                        <td><button class="expand-btn">+</button></td>
+                        <td>{{ $user->first_name }}</td>
+                        <td>{{ $user->last_name }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td>{{ $roleNames[$user->role] ?? $user->role }}</td>
+                        <td>
+                            <a href="{{ route('admin.users.edit',$user) }}" class="table-action-btn table-action-edit">Редактировать</a>
+                            <form action="{{ route('admin.users.destroy',$user) }}" method="POST" data-delete-form style="display:inline-block" data-user-name="{{ $user->first_name }} {{ $user->last_name }}">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="table-action-btn table-action-delete">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        function toggleDetails(button) {
-            const row = button.closest('tr');
-            const details = row.nextElementSibling;
-            const isVisible = details.style.display === 'table-row';
-            details.style.display = isVisible ? 'none' : 'table-row';
-            button.textContent = isVisible ? '+' : '–';
-        }
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Подтверждение удаления через SweetAlert2
-            document.querySelectorAll('form[data-delete-form]').forEach(form => {
-                form.addEventListener('submit', e => {
-                    e.preventDefault();
-                    const name = form.dataset.userName;
+        document.addEventListener('DOMContentLoaded',()=> {
+            // Expand details
+            document.querySelectorAll('.expand-btn').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    const row=btn.closest('tr');
                     Swal.fire({
-                        title: `Удалить пользователя «${name}»?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Да, удалить',
-                        cancelButtonText: 'Отмена',
-                        reverseButtons: true,
-                    }).then(result => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
+                        title:`<strong>${row.children[1].textContent} ${row.children[2].textContent}</strong>`,
+                        html:`
+                        <p><strong>Email:</strong> ${row.dataset.email}</p>
+                        <p><strong>Роль:</strong> ${row.dataset.role}</p>
+                        <p><strong>Телефон:</strong> ${row.dataset.phone}</p>
+                        <p><strong>Дата рождения:</strong> ${row.dataset.birthday}</p>
+                        <p><strong>Описание:</strong><br>${row.dataset.description}</p>
+                    `,
+                        width:600, confirmButtonText:'Закрыть'
                     });
+                });
+            });
+
+            // Delete confirmation
+            document.querySelectorAll('form[data-delete-form]').forEach(form=>{
+                form.addEventListener('submit', e=>{
+                    e.preventDefault();
+                    const name=form.dataset.userName;
+                    Swal.fire({
+                        title:`Удалить пользователя «${name}»?`,
+                        icon:'warning',
+                        showCancelButton:true,
+                        confirmButtonText:'Да, удалить',
+                        cancelButtonText:'Отмена',
+                        reverseButtons:true
+                    }).then(res=> res.isConfirmed && form.submit());
                 });
             });
         });

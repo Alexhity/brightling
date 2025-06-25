@@ -452,9 +452,13 @@
                             <input type="time"
                                    name="timetables[{{ $idx }}][start_time]"
                                    class="form-control"
-                                   value="{{ old("timetables.$idx.start_time", $slot->start_time->format('H:i')) }}"
+                                   value="{{ old(
+                                   "timetables.{$idx}.start_time",
+                                   \Carbon\Carbon::parse($slot->start_time)->format('H:i')
+                                   ) }}"
                                    required>
                         </td>
+
                         <td>
                             <input type="number"
                                    name="timetables[{{ $idx }}][duration]"

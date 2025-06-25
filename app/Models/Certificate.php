@@ -6,21 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Certificate extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'language_id',
-        'level',
-        'title',
-        'file_path',
-        'issued_at',
-    ];
-
-    /**
-     * Приведение типов.
-     */
-    protected $casts = [
-        'issued_at' => 'datetime',
-    ];
+    protected $fillable = ['user_id', 'title', 'file_path'];
 
     /**
      * Связь: сертификат принадлежит пользователю.
@@ -30,11 +16,6 @@ class Certificate extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Связь: сертификат по языку.
-     */
-    public function language()
-    {
-        return $this->belongsTo(Language::class);
-    }
 }
+
+

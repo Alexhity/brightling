@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -77,10 +78,23 @@ class AdminUsersController extends Controller
 
     public function destroy(User $user)
     {
+        // Проверяем связи с основными слотами
+        $hasMainSlots = Timetable::where('user_id', $user->id)->exists();
+
+        // Проверяем связи со слотами-заменами
+        $hasOverrideSlots = Timetable::where('override_user_id', $user->id)->exists();
+
+        if ($hasMainSlots || $hasOverrideSlots) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'Невозможно удалить: пользователь назначен преподавателем в расписании.');
+        }
+
+        // Если связей нет — удаляем
         $user->delete();
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', 'Пользователь удалён успешно');
+            ->with('success', 'Пользователь успешно удалён.');
     }
 }

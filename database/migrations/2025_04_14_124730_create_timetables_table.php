@@ -20,40 +20,35 @@ return new class extends Migration
             $table->enum('weekday', [
                 'понедельник', 'вторник', 'среда', 'четверг',
                 'пятница', 'суббота', 'воскресенье'
-            ])->nullable();
-
-            // Поле date: для одноразовых слотов
-            $table->date('date')->nullable();
-
-            // Время начала занятия
+            ])->nullable()->comment('День недели для регулярных слотов');
+            $table->date('date')->nullable()->comment('Дата для разовых слотов');
             $table->time('start_time');
-
-            // Длительность занятия (в минутах)
             $table->integer('duration')->unsigned();
+            $table->date('ends_at')->nullable()->comment('Дата окончания регулярного слота');
 
-            // Тип занятия: групповой, индивидуальный или бесплатный слот
-            $table->enum('type', ['group', 'individual', 'test']) ->default('group')
-                ->default('group');
-
-            // Активен ли этот слот (если Нужно выключить временно)
+            // Флаги и типы
+            $table->enum('type', ['group', 'individual', 'test'])->default('group');
             $table->boolean('active')->default(true);
+            $table->boolean('is_public')->default(false)->comment('Виден ли слот студентам');
+            $table->boolean('cancelled')->default(false)->comment('Отменен ли слот');
 
 
-            // Если это расписание для конкретного курса – ссылка на courses.id
-            $table->foreignId('course_id')
-                ->nullable()
-                ->constrained()
-                ->onDelete('cascade');
-
-            // Какому пользователю (преподавателю) принадлежит слот
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
-
+            // Связи
+            $table->foreignId('course_id')->nullable()->constrained()->onDelete('set null');
             $table->unsignedBigInteger('request_id')->nullable();
+            $table->foreignId('user_id')->constrained('users')->comment('Основной преподаватель');
+            $table->foreignId('override_user_id')->nullable()->constrained('users')->comment('Заменяющий преподаватель');
+            $table->foreignId('parent_id')->nullable()->constrained('timetables')->onDelete('cascade')->comment('Родительский слот');
 
+            // Стандартные поля
             $table->timestamps();
+            $table->softDeletes();
+
+            // Индексы
+            $table->index('date');
+            $table->index('weekday');
         });
+
     }
 
     /**

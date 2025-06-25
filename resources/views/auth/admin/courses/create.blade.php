@@ -559,4 +559,24 @@
             });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const errors = @json($errors->all());
+
+            errors.forEach(msg => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: msg,
+                    showConfirmButton: false,
+                    timer: 5000,
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'swal2-toast'
+                    }
+                });
+            });
+        });
+    </script>
 @endsection

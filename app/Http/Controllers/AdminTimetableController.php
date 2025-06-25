@@ -8,6 +8,7 @@ use App\Models\Price;
 use App\Models\Timetable;
 use App\Models\Course;
 use App\Models\User;
+use App\Services\LessonGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,29 +24,32 @@ class AdminTimetableController extends Controller
             : Carbon::now()->startOfWeek();
         $endOfWeek = $startOfWeek->copy()->endOfWeek();
 
-        // Исправленный запрос для получения слотов
+        // ДОБАВЛЯЕМ: Определение слотов с исключениями
+        $slotsWithExceptions = Timetable::whereNotNull('parent_id')
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->pluck('parent_id');
+
+        // Модифицируем запрос - УБИРАЕМ ПРИВЯЗКУ К КУРСАМ
         $slots = Timetable::with(['course', 'teacher', 'overrideTeacher'])
-            ->where(function($q) use($startOfWeek, $endOfWeek) {
+            ->where(function($q) use($startOfWeek, $endOfWeek, $slotsWithExceptions) {
                 // Разовые слоты в текущей неделе
                 $q->whereNotNull('date')
                     ->whereBetween('date', [$startOfWeek, $endOfWeek]);
 
-                // Регулярные слоты
-                $q->orWhere(function($q2) use($startOfWeek, $endOfWeek) {
+                // Регулярные слоты без исключений
+                $q->orWhere(function($q2) use($startOfWeek, $endOfWeek, $slotsWithExceptions) {
                     $q2->whereNull('date')
-                        ->whereHas('course', function($qc) use($startOfWeek, $endOfWeek) {
-                            // ВАЖНОЕ ИСПРАВЛЕНИЕ ▼▼▼
-                            $qc->where('created_at', '<=', $endOfWeek)
-                                ->where(function($q3) use($startOfWeek) {
-                                    $q3->whereNull('duration')
-                                        ->orWhere('duration', '>=', $startOfWeek);
-                                })
-                                // Добавляем проверку начала курса
-                                ->where('created_at', '<=', $endOfWeek); // Эту строку добавляем
+                        ->whereNotIn('id', $slotsWithExceptions)
+                        // УБИРАЕМ ПРОВЕРКУ НА КУРС
+                        ->where('active', true) // Добавляем проверку активности
+                        ->where(function($q3) use($startOfWeek) {
+                            $q3->whereNull('ends_at') // Если нет даты окончания
+                            ->orWhere('ends_at', '>=', $startOfWeek); // Или еще действует
                         });
                 });
             })
             ->get();
+
 
         // Группировка слотов с исправлением вычисления даты
         $groupedSlots = $slots->groupBy(function($slot) use($startOfWeek) {
@@ -98,6 +102,8 @@ class AdminTimetableController extends Controller
             $filteredGroupedSlots[$dateString] = $filteredSlots->sortBy('start_time');
         }
 
+
+
         return view('auth.admin.timetables.index', [
             'startOfWeek' => $startOfWeek,
             'endOfWeek' => $endOfWeek,
@@ -106,164 +112,202 @@ class AdminTimetableController extends Controller
         ]);
     }
 
-
-    public function create()
-    {
-        $courses = Course::orderBy('title')->get();
-        $teachers = User::where('role', 'teacher')->get();
-        $weekdays = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
-        $lessonTypes = Timetable::lessonTypes();
-
-        return view('auth.admin.timetables.create', compact(
-            'courses', 'teachers', 'weekdays', 'lessonTypes'
-        ));
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'slot_type' => 'required|in:single,recurring',
-            'date' => 'required_if:slot_type,single|nullable|date',
-            'weekday' => 'required_if:slot_type,recurring|nullable|in:понедельник,вторник,среда,четверг,пятница,суббота,воскресенье',
-            'ends_at' => 'nullable|date|after_or_equal:today',
-            'lesson_type' => 'required|in:group,individual,test',
-            'start_time' => 'required|date_format:H:i',
-            'duration' => [
-                'required',
-                'integer',
-                function ($attribute, $value, $fail) use ($request) {
-                    // Проверка для тестовых уроков
-                    if ($request->input('lesson_type') === 'test' && $value != 15) {
-                        $fail('Для тестовых уроков длительность должна быть 15 минут.');
-                    }
-
-                    // Проверка для других типов уроков
-                    if ($request->input('lesson_type') !== 'test') {
-                        if ($value < 15) {
-                            $fail('Минимальная длительность занятия - 15 минут.');
-                        }
-                        if ($value > 240) {
-                            $fail('Максимальная длительность занятия - 4 часа (240 минут).');
-                        }
-                    }
-                }
-            ],
-            'teacher_id' => 'required|exists:users,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'title' => 'required_without:course_id|string|max:255',
-            'active' => 'sometimes|boolean',
-            'is_public' => 'sometimes|boolean',
-        ]);
-
-        // Автоматическая установка параметров для тестовых уроков
-        $data = $validated;
-        if ($data['lesson_type'] === 'test') {
-            $data['duration'] = 15; // Фиксированная длительность 15 минут
-            $data['is_public'] = true; // По умолчанию публичный
-        }
-
-        $slotData = [
-            'type' => $data['lesson_type'],
-            'start_time' => $data['start_time'],
-            'duration' => $data['duration'],
-            'user_id' => $data['teacher_id'],
-            'course_id' => $data['course_id'] ?? null,
-            'title' => $data['title'] ?? null,
-            'active' => $request->has('active'),
-            'is_public' => $request->boolean('is_public') && $data['lesson_type'] === 'test',
-        ];
-
-        if ($data['slot_type'] === 'single') {
-            $slotData['date'] = $data['date'];
-        } else {
-            $slotData['weekday'] = $data['weekday'];
-            $slotData['ends_at'] = $data['ends_at'] ?? null;
-        }
-
-        Timetable::create($slotData);
-
-        return redirect()->route('admin.timetables.index')
-            ->with('success', 'Слот успешно создан!');
-    }
-
     public function editSlot(Timetable $timetable, $date)
     {
-        $teachers = User::where('role','teacher')->get();
+        // Проверяем существование override-записи для этой даты
+        $overrideSlot = Timetable::where('parent_id', $timetable->id)
+            ->where('date', $date)
+            ->first();
+
+        $teachers = User::where('role', 'teacher')->get();
+
+
+
         return view('auth.admin.timetables.edit-slot', compact(
-            'timetable','teachers','date'
+            'timetable',
+            'date',
+            'teachers',
+            'overrideSlot'
         ));
     }
 
     public function updateSlot(Request $request, Timetable $timetable, string $date)
     {
-        $data = $request->validate([
-            'apply_to' => 'required|in:single,series',
-            'active'   => 'required|boolean',
-            'user_id'  => 'required|exists:users,id',
+        $request->validate([
+            'teacher_id' => 'nullable|exists:users,id',
+            'cancelled'  => 'sometimes|boolean',
         ]);
 
-        if ($data['apply_to'] === 'series') {
-            // Обновляем основной слот
-            $timetable->update([
-                'active'  => $data['active'],
-                'user_id' => $data['user_id'],
-            ]);
-
-            // Удаляем все исключения для этого слота
-            Timetable::where('parent_id', $timetable->id)->delete();
-        } else {
-            // Обновляем только для конкретной даты
-            $this->updateSingleSlot($timetable, $date, $data);
-        }
-
-        return redirect()
-            ->route('admin.timetables.index')
-            ->with('success', 'Слот успешно обновлён');
-    }
-
-    protected function updateSingleSlot(Timetable $parent, string $date, array $data)
-    {
-        // Удаляем старые исключения для этой даты
-        Timetable::where('parent_id', $parent->id)
+        // Находим override-слот (если есть)
+        $overrideSlot = Timetable::where('parent_id', $timetable->id)
             ->where('date', $date)
-            ->delete();
+            ->first();
 
-        // Если слот деактивирован - просто создаем отмену
-        if (!$data['active']) {
-            return Timetable::create([
-                'parent_id' => $parent->id,
-                'date' => $date,
-                'cancelled' => true,
-                'course_id' => $parent->course_id,
-                'weekday' => $parent->weekday,
-                'start_time' => $parent->start_time,
-                'duration' => $parent->duration,
-                'type' => $parent->type,
-                'active' => false,
-                'user_id' => $parent->user_id,
-                'title' => $parent->title,
+        // 1) Отмена занятия
+        if ($request->has('cancelled') && $request->cancelled) {
+            if ($overrideSlot) {
+                $overrideSlot->update([
+                    'cancelled'        => true,
+                    'override_user_id' => null,
+                ]);
+            } else {
+                Timetable::create([
+                    'parent_id'   => $timetable->id,
+                    'date'        => $date,
+                    'cancelled'   => true,
+                    'course_id'   => $timetable->course_id,
+                    'weekday'     => $timetable->weekday,
+                    'start_time'  => $timetable->start_time,
+                    'duration'    => $timetable->duration,
+                    'type'        => $timetable->type,
+                    'active'      => true,
+                    'user_id'     => $timetable->user_id,
+                    'title'       => $timetable->title,
+                ]);
+            }
+
+            // <<< Вызов генератора для отмены
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Занятие отменено');
+        }
+
+        // 2) Восстановление отменённого занятия
+        if ($request->has('cancelled') && !$request->cancelled && $overrideSlot && $overrideSlot->cancelled) {
+            $overrideSlot->delete();
+
+            // <<< Вызов генератора для восстановления
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Отмена занятия отменена');
+        }
+
+        // 3) Возврат основного преподавателя
+        if ($request->teacher_id == $timetable->user_id) {
+            if ($overrideSlot) {
+                $overrideSlot->delete();
+            }
+
+            // <<< Вызов генератора для возврата учителя
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Восстановлен основной преподаватель');
+        }
+
+        // 4) Замена преподавателя (override)
+        if ($overrideSlot) {
+            $overrideSlot->update([
+                'override_user_id' => $request->teacher_id,
+                'cancelled'        => false,
+            ]);
+        } else {
+            Timetable::create([
+                'parent_id'        => $timetable->id,
+                'date'             => $date,
+                'override_user_id' => $request->teacher_id,
+                'course_id'        => $timetable->course_id,
+                'weekday'          => $timetable->weekday,
+                'start_time'       => $timetable->start_time,
+                'duration'         => $timetable->duration,
+                'type'             => $timetable->type,
+                'active'           => true,
+                'user_id'          => $timetable->user_id,
+                'title'            => $timetable->title,
+                'cancelled'        => false,
             ]);
         }
 
-        // Если изменен преподаватель - создаем исключение с новым преподавателем
-        if ($data['user_id'] != $parent->user_id) {
-            return Timetable::create([
-                'parent_id' => $parent->id,
-                'date' => $date,
-                'override_user_id' => $data['user_id'],
-                'course_id' => $parent->course_id,
-                'weekday' => $parent->weekday,
-                'start_time' => $parent->start_time,
-                'duration' => $parent->duration,
-                'type' => $parent->type,
-                'active' => true,
-                'user_id' => $parent->user_id,
-                'title' => $parent->title,
-            ]);
-        }
+        // <<< Вызов генератора после смены преподавателя
+        LessonGenerator::makeLessonForDate(
+            $timetable,
+            Carbon::parse($date)
+        );
 
-        // Если никаких изменений нет - ничего не делаем
-        return null;
+        return redirect()->route('admin.timetables.index')
+            ->with('success', 'Изменения сохранены');
     }
+
+    public function createSlot()
+    {
+        $teachers = User::where('role', 'teacher')->get();
+        $weekdays = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+        $types = ['group' => 'Групповой', 'individual' => 'Индивидуальный', 'test' => 'Тестовый'];
+
+        return view('auth.admin.timetables.create-slot', compact('teachers', 'weekdays', 'types'));
+    }
+
+    public function storeSlot(Request $request)
+    {
+        $validated = $request->validate([
+            'timetables' => 'required|array|min:1',
+            'timetables.*.weekday' => 'required|in:понедельник,вторник,среда,четверг,пятница,суббота,воскресенье',
+            'timetables.*.start_time' => 'required|date_format:H:i',
+            'timetables.*.duration' => 'required|integer|min:30|max:240',
+            'timetables.*.type' => 'required|in:group,individual,test',
+            'timetables.*.user_id' => 'required|exists:users,id',
+            'timetables.*.ends_at' => 'nullable|date|after_or_equal:today', // Добавляем правило
+        ]);
+
+        foreach ($validated['timetables'] as $slotData) {
+            Timetable::create([
+                'weekday' => $slotData['weekday'],
+                'start_time' => $slotData['start_time'],
+                'duration' => $slotData['duration'],
+                'type' => $slotData['type'],
+                'user_id' => $slotData['user_id'],
+                'ends_at' => $slotData['ends_at'] ?? null, // Сохраняем дату окончания
+                'active' => true,
+                // Для регулярных слотов без курса
+                'course_id' => null,
+                'title' => $this->generateSlotTitle($slotData['type'])
+            ]);
+        }
+
+        return redirect()->route('admin.timetables.index')
+            ->with('success', 'Регулярные слоты успешно созданы');
+    }
+
+    private function generateSlotTitle($type)
+    {
+        $titles = [
+            'group' => 'Групповое занятие',
+            'individual' => 'Индивидуальное занятие',
+            'test' => 'Тестовый урок'
+        ];
+
+        return $titles[$type] ?? 'Занятие';
+    }
+
+
+    public function destroySlot(Timetable $timetable)
+    {
+        // Проверяем, что слот регулярный (без курса) и не является исключением
+        if ($timetable->course_id || $timetable->parent_id) {
+            return redirect()->route('admin.timetables.index')
+                ->with('error', 'Можно удалять только регулярные слоты без курса');
+        }
+
+        // Удаляем слот
+        $timetable->delete();
+
+        return redirect()->route('admin.timetables.index')
+            ->with('success', 'Регулярный слот удалён');
+    }
+
+
 }
+
+
 
