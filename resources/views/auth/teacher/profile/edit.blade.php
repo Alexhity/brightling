@@ -287,19 +287,19 @@
                                                class="form-control-plaintext">
                                     </div>
 
-                                    {{-- Выбор уровня --}}
-                                    <div class="form-group" style="flex:1">
-                                        <select name="languages_levels[{{ $lang->id }}]"
-                                                class="form-control">
-                                            <option value="">— уровень —</option>
-                                            @foreach($levels as $key => $label)
-                                                <option value="{{ $key }}"
-                                                    {{ $lang->pivot->level === $key ? 'selected' : '' }}>
-                                                    {{ strtoupper($label) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+{{--                                    --}}{{-- Выбор уровня --}}
+{{--                                    <div class="form-group" style="flex:1">--}}
+{{--                                        <select name="languages_levels[{{ $lang->id }}]"--}}
+{{--                                                class="form-control">--}}
+{{--                                            <option value="">— уровень —</option>--}}
+{{--                                            @foreach($levels as $key => $label)--}}
+{{--                                                <option value="{{ $key }}"--}}
+{{--                                                    {{ $lang->pivot->level === $key ? 'selected' : '' }}>--}}
+{{--                                                    {{ strtoupper($label) }}--}}
+{{--                                                </option>--}}
+{{--                                            @endforeach--}}
+{{--                                        </select>--}}
+{{--                                    </div>--}}
 
                                     {{-- Удалить язык --}}
                                     <button type="button"
