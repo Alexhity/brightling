@@ -9,7 +9,7 @@ class TimetableObserver
 {
     public function created(Timetable $timetable): void
     {
-        LessonGenerator::generateAll(8);
+        LessonGenerator::generateAll(16);
     }
 
     public function updated(Timetable $timetable): void

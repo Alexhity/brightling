@@ -14,7 +14,7 @@ class LessonGenerator
      *
      * @param int $weeks Количество недель вперёд для регулярных слотов
      */
-    public static function generateAll(int $weeks = 8): void
+    public static function generateAll(int $weeks = 16): void
     {
         $today   = Carbon::today();
         $endDate = $today->copy()->addWeeks($weeks);
