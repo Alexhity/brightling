@@ -213,8 +213,8 @@
                                     <td><input type="time" name="timetables[{{ $i }}][start_time]" value="{{ $t['start_time'] }}" required></td>
                                     <td><input type="number" name="timetables[{{ $i }}][duration]" min="30" max="240" value="{{ $t['duration'] }}" required></td>
                                     <td><select name="timetables[{{ $i }}][type]" required>
-                                            <option value="individual" {{ $t['type']=='individual'?'selected':'' }}>Индивидуал.</option>
-                                            <option value="group" {{ $t['type']=='group'?'selected':'' }}>Групп.</option>
+                                            <option value="individual" {{ $t['type']=='individual'?'selected':'' }}>Индивидуальный</option>
+                                            <option value="group" {{ $t['type']=='group'?'selected':'' }}>Групповой</option>
                                         </select></td>
                                     <td><select name="timetables[{{ $i }}][user_id]" required>
                                             <option value="">Преподаватель</option>

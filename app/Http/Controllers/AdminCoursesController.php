@@ -35,7 +35,8 @@ class AdminCoursesController extends Controller
                 $q->where('active', true)
                     ->orderByRaw("COALESCE(date, '0001-01-01') asc")
                     ->orderBy('weekday')
-                    ->orderBy('start_time');
+                    ->orderBy('start_time')
+                    ->whereNull('date') ;
             }
         ]);
 
@@ -69,10 +70,10 @@ class AdminCoursesController extends Controller
         $languages = Language::orderBy('name')->get();
         $prices    = Price::orderBy('unit_price')->get();
         $levels    = ['beginner'=>'Начинающий','A1'=>'A1','A2'=>'A2','B1'=>'B1','B2'=>'B2','C1'=>'C1','C2'=>'C2'];
-        $formats   = ['individual'=>'Индивидуальный','group'=>'Групповой','online'=>'Онлайн','offline'=>'Офлайн','hybrid'=>'Смешанный'];
+        $formats   = ['individual'=>'Индивидуальный','group'=>'Групповой'];
         $teachers  = User::where('role','teacher')->get();
         $weekdays  = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
-        $types     = ['group'=>'Групповой','individual'=>'Индивидуальный','free'=>'Бесплатный'];
+        $types     = ['group'=>'Групповой','individual'=>'Индивидуальный'];
 
         return view('auth.admin.courses.create', compact(
             'languages','prices','levels','formats',
@@ -101,7 +102,7 @@ class AdminCoursesController extends Controller
             'timetables.*.date'      => 'required_without:timetables.*.weekday|nullable|date',
             'timetables.*.start_time'=> 'required|date_format:H:i',
             'timetables.*.duration'  => 'required|integer|min:1',
-            'timetables.*.type'      => 'required|in:group,individual,free',
+            'timetables.*.type' => 'required|in:group,individual',
             'timetables.*.user_id'   => 'required|exists:users,id',
             'timetables.*.active'    => 'sometimes|boolean',
         ]);
@@ -130,7 +131,7 @@ class AdminCoursesController extends Controller
         $teachers  = User::where('role','teacher')->get();
         $weekdays  = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
         $types     = ['group'=>'Групповой','individual'=>'Индивидуальный','free'=>'Бесплатный'];
-        $slots     = $course->timetables;  // <— теперь правильная связь
+        $slots     = $course->timetables->whereNull('date');  // <— теперь правильная связь
 
         return view('auth.admin.courses.edit', compact(
             'course','languages','prices','levels','formats',
@@ -161,7 +162,7 @@ class AdminCoursesController extends Controller
             'timetables.*.date'      => 'required_without:timetables.*.weekday|nullable|date',
             'timetables.*.start_time'=> 'required|date_format:H:i',
             'timetables.*.duration'  => 'required|integer|min:1',
-            'timetables.*.type'      => 'required|in:group,individual,free',
+            'timetables.*.type' => 'required|in:group,individual',
             'timetables.*.user_id'   => 'required|exists:users,id',
             'timetables.*.active'    => 'sometimes|boolean',
         ];
