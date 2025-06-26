@@ -27,6 +27,7 @@ class StudentTimetableController extends Controller
         // 2) Тестовые уроки через pivot
         $byPivot = Lesson::with(['course','teacher','students'])
             ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->where('type', 'test') // Добавляем фильтр по типу
             ->whereHas('students', fn($q) => $q->where('user_id', $student->id));
 
         // 3) Объединяем и сортируем

@@ -39,7 +39,7 @@
         }
         .statistic-card p {
             font-family: 'Montserrat SemiBold', sans-serif;
-            font-size: 1.5чem;
+            font-size: 1.5em;
             margin: 0;
         }
     </style>

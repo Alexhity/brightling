@@ -204,7 +204,13 @@
                             @foreach($afternoon as $l)
                                 <div class="slot @if($l->status==='cancelled') slot--cancelled @endif">
                                     <div class="slot-header">
-                                        <span>{{ $l->course->title }}</span>
+                <span>
+                    @if($l->type === 'test')
+                        Тестовый урок
+                    @else
+                        {{ optional($l->course)->title ?? '—' }}
+                    @endif
+                </span>
                                     </div>
                                     <div class="slot-time">{{ Carbon::parse($l->time)->format('H:i') }}</div>
                                     <div class="slot-type">
