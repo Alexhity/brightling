@@ -131,134 +131,37 @@ class AdminTimetableController extends Controller
         ));
     }
 
-    public function updateSlot(Request $request, Timetable $timetable, string $date)
-    {
-        $request->validate([
-            'teacher_id' => 'nullable|exists:users,id',
-            'cancelled'  => 'sometimes|boolean',
-        ]);
-
-        // Находим override-слот (если есть)
-        $overrideSlot = Timetable::where('parent_id', $timetable->id)
-            ->where('date', $date)
-            ->first();
-
-        // 1) Отмена занятия
-        if ($request->has('cancelled') && $request->cancelled) {
-            if ($overrideSlot) {
-                $overrideSlot->update([
-                    'cancelled'        => true,
-                    'override_user_id' => null,
-                ]);
-            } else {
-                Timetable::create([
-                    'parent_id'   => $timetable->id,
-                    'date'        => $date,
-                    'cancelled'   => true,
-                    'course_id'   => $timetable->course_id,
-                    'weekday'     => $timetable->weekday,
-                    'start_time'  => $timetable->start_time,
-                    'duration'    => $timetable->duration,
-                    'type'        => $timetable->type,
-                    'active'      => true,
-                    'user_id'     => $timetable->user_id,
-                    'title'       => $timetable->title,
-                ]);
-            }
-
-            // <<< Вызов генератора для отмены
-            LessonGenerator::makeLessonForDate(
-                $timetable,
-                Carbon::parse($date)
-            );
-
-            return redirect()->route('admin.timetables.index')
-                ->with('success', 'Занятие отменено');
-        }
-
-        // 2) Восстановление отменённого занятия
-        if ($request->has('cancelled') && !$request->cancelled && $overrideSlot && $overrideSlot->cancelled) {
-            $overrideSlot->delete();
-
-            // <<< Вызов генератора для восстановления
-            LessonGenerator::makeLessonForDate(
-                $timetable,
-                Carbon::parse($date)
-            );
-
-            return redirect()->route('admin.timetables.index')
-                ->with('success', 'Отмена занятия отменена');
-        }
-
-        // 3) Возврат основного преподавателя
-        if ($request->teacher_id == $timetable->user_id) {
-            if ($overrideSlot) {
-                $overrideSlot->delete();
-            }
-
-            // <<< Вызов генератора для возврата учителя
-            LessonGenerator::makeLessonForDate(
-                $timetable,
-                Carbon::parse($date)
-            );
-
-            return redirect()->route('admin.timetables.index')
-                ->with('success', 'Восстановлен основной преподаватель');
-        }
-
-        // 4) Замена преподавателя (override)
-        if ($overrideSlot) {
-            $overrideSlot->update([
-                'override_user_id' => $request->teacher_id,
-                'cancelled'        => false,
-            ]);
-        } else {
-            Timetable::create([
-                'parent_id'        => $timetable->id,
-                'date'             => $date,
-                'override_user_id' => $request->teacher_id,
-                'course_id'        => $timetable->course_id,
-                'weekday'          => $timetable->weekday,
-                'start_time'       => $timetable->start_time,
-                'duration'         => $timetable->duration,
-                'type'             => $timetable->type,
-                'active'           => true,
-                'user_id'          => $timetable->user_id,
-                'title'            => $timetable->title,
-                'cancelled'        => false,
-            ]);
-        }
-
-        // <<< Вызов генератора после смены преподавателя
-        LessonGenerator::makeLessonForDate(
-            $timetable,
-            Carbon::parse($date)
-        );
-
-        return redirect()->route('admin.timetables.index')
-            ->with('success', 'Изменения сохранены');
-    }
-
     public function createSlot()
     {
         $teachers = User::where('role', 'teacher')->get();
         $weekdays = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
-        $types = ['group' => 'Групповой', 'individual' => 'Индивидуальный', 'test' => 'Тестовый'];
 
-        return view('auth.admin.timetables.create-slot', compact('teachers', 'weekdays', 'types'));
+        return view('auth.admin.timetables.create-slot', compact('teachers', 'weekdays'));
     }
 
     public function storeSlot(Request $request)
     {
-        $validated = $request->validate([
+        // Определяем, создаются ли тестовые слоты
+        $isTest = $request->has('is_test');
+
+        $rules = [
             'timetables' => 'required|array|min:1',
             'timetables.*.weekday' => 'required|in:понедельник,вторник,среда,четверг,пятница,суббота,воскресенье',
             'timetables.*.start_time' => 'required|date_format:H:i',
-            'timetables.*.duration' => 'required|integer|min:30|max:240',
-            'timetables.*.type' => 'required|in:group,individual,test',
             'timetables.*.user_id' => 'required|exists:users,id',
-            'timetables.*.ends_at' => 'nullable|date|after_or_equal:today', // Добавляем правило
-        ]);
+            'timetables.*.ends_at' => 'nullable|date|after_or_equal:today',
+        ];
+
+        // Для тестовых слотов добавляем фиксированные правила
+        if ($isTest) {
+            $rules['timetables.*.duration'] = 'required|integer|min:15|max:15';
+            $rules['timetables.*.type'] = 'required|in:test';
+        } else {
+            $rules['timetables.*.duration'] = 'required|integer|min:30|max:240';
+            $rules['timetables.*.type'] = 'required|in:group,individual,test';
+        }
+
+        $validated = $request->validate($rules);
 
         foreach ($validated['timetables'] as $slotData) {
             Timetable::create([
@@ -267,16 +170,19 @@ class AdminTimetableController extends Controller
                 'duration' => $slotData['duration'],
                 'type' => $slotData['type'],
                 'user_id' => $slotData['user_id'],
-                'ends_at' => $slotData['ends_at'] ?? null, // Сохраняем дату окончания
+                'ends_at' => $slotData['ends_at'] ?? null,
                 'active' => true,
-                // Для регулярных слотов без курса
                 'course_id' => null,
                 'title' => $this->generateSlotTitle($slotData['type'])
             ]);
         }
 
+        $message = $isTest
+            ? 'Тестовые слоты успешно созданы'
+            : 'Регулярные слоты успешно созданы';
+
         return redirect()->route('admin.timetables.index')
-            ->with('success', 'Регулярные слоты успешно созданы');
+            ->with('success', $message);
     }
 
     private function generateSlotTitle($type)

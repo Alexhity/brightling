@@ -15,6 +15,9 @@
             margin-bottom: 30px;
         }
         .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
         }
         .btn-add-slot {
@@ -75,6 +78,13 @@
             display: inline-flex;
             align-items: center;
         }
+        .fixed-value {
+            background-color: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 100px;
+        }
     </style>
 @endsection
 
@@ -83,8 +93,8 @@
 
     <div class="admin-content-wrapper">
         <div class="form-section">
-            <div class="form-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Создание регулярных слотов</h2>
+            <div class="form-header">
+                <h2>Создание тестовых слотов</h2>
                 <button type="button" id="btn-add-slot" class="btn-add-slot">
                     <i class="fas fa-plus"></i> Добавить слот
                 </button>
@@ -92,16 +102,18 @@
 
             <form method="POST" action="{{ route('admin.timetables.store-slot') }}">
                 @csrf
+                <input type="hidden" name="is_test" value="1">
+
                 <div class="slots-container">
                     <table id="slots-table" class="slots-table">
                         <thead>
                         <tr>
                             <th>День недели *</th>
                             <th>Время начала *</th>
-                            <th>Длительность (мин) *</th>
-                            <th>Тип занятия *</th>
+                            <th>Длительность</th>
+                            <th>Тип занятия</th>
                             <th>Преподаватель *</th>
-                            <th>Дата окончания</th> <!-- Новая колонка -->
+                            <th>Дата окончания</th>
                             <th>Действия</th>
                         </tr>
                         </thead>
@@ -119,15 +131,12 @@
                                 <input type="time" name="timetables[0][start_time]" required>
                             </td>
                             <td>
-                                <input type="number" name="timetables[0][duration]"
-                                       min="30" max="240" value="60" required>
+                                <span class="fixed-value">15 минут</span>
+                                <input type="hidden" name="timetables[0][duration]" value="15">
                             </td>
                             <td>
-                                <select name="timetables[0][type]" required>
-                                    @foreach($types as $key => $name)
-                                        <option value="{{ $key }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <span class="fixed-value">Тестовый</span>
+                                <input type="hidden" name="timetables[0][type]" value="test">
                             </td>
                             <td>
                                 <select name="timetables[0][user_id]" required>
@@ -139,7 +148,6 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <!-- Добавленное поле для даты окончания -->
                             <td>
                                 <input type="date" name="timetables[0][ends_at]"
                                        min="{{ now()->format('Y-m-d') }}">
@@ -153,7 +161,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn-submit">Сохранить слоты</button>
+                    <button type="submit" class="btn-submit">Сохранить тестовые слоты</button>
                     <a href="{{ route('admin.timetables.index') }}" class="btn-cancel">Назад к расписанию</a>
                 </div>
             </form>
@@ -164,7 +172,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             let idx = 1;
             const weekdays = @json($weekdays);
-            const types = @json($types);
             const teachers = @json($teachers);
 
             // Функция для генерации строки расписания
@@ -176,11 +183,6 @@
                 weekdays.forEach(day => {
                     weekdaysOptions += `<option value="${day}">${day}</option>`;
                 });
-
-                let typesOptions = '';
-                for (const [key, value] of Object.entries(types)) {
-                    typesOptions += `<option value="${key}">${value}</option>`;
-                }
 
                 let teachersOptions = '<option value="">Выберите преподавателя</option>';
                 teachers.forEach(teacher => {
@@ -201,13 +203,12 @@
                         <input type="time" name="timetables[${index}][start_time]" required>
                     </td>
                     <td>
-                        <input type="number" name="timetables[${index}][duration]"
-                               min="30" max="240" value="60" required>
+                        <span class="fixed-value">15 минут</span>
+                        <input type="hidden" name="timetables[${index}][duration]" value="15">
                     </td>
                     <td>
-                        <select name="timetables[${index}][type]" required>
-                            ${typesOptions}
-                        </select>
+                        <span class="fixed-value">Тестовый</span>
+                        <input type="hidden" name="timetables[${index}][type]" value="test">
                     </td>
                     <td>
                         <select name="timetables[${index}][user_id]" required>
@@ -220,8 +221,6 @@
                     <td>
                         <button type="button" class="btn-remove-slot">×</button>
                     </td>
-
-
                 `;
                 return row;
             }
