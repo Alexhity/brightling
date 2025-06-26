@@ -270,7 +270,7 @@
 
                     {{-- Вместо отдельного <select name="level"> и Tom Select --}}
                     <div class="form-group">
-                        <label>Языки и уровень</label>
+                        <label>Языки </label>
 
                         {{-- Контейнер для строк языков --}}
                         <div id="languages-list">
