@@ -397,7 +397,7 @@
                           style="border-top:1px solid #e0e0e0">
                         @csrf
                         <input type="hidden" name="course_id" value="{{ $course->id }}">
-                        <button type="button" class="js-enroll-btn btn-enroll">
+                        <button type="button" class="js-enroll-btn btn-enroll" style="justify-content: center; width: 100%">
                             Записаться
                         </button>
                     </form>

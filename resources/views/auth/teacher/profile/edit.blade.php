@@ -328,14 +328,14 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="form-group" style="flex:1">
-                                <select name="languages_levels[new]" class="form-control level-select">
-                                    <option value="">— уровень —</option>
-                                    @foreach($levels as $key => $label)
-                                        <option value="{{ $key }}">{{ strtoupper($label) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+{{--                            <div class="form-group" style="flex:1">--}}
+{{--                                <select name="languages_levels[new]" class="form-control level-select">--}}
+{{--                                    <option value="">— уровень —</option>--}}
+{{--                                    @foreach($levels as $key => $label)--}}
+{{--                                        <option value="{{ $key }}">{{ strtoupper($label) }}</option>--}}
+{{--                                    @endforeach--}}
+{{--                                </select>--}}
+{{--                            </div>--}}
                             <button type="button" class="btn btn-sm btn-outline-danger ml-2 remove-language">
                                 ✕
                             </button>
