@@ -1,4 +1,4 @@
-{{-- resources/views/auth/student/reviews --}}
+{{-- resources/views/auth/student/reviews.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
@@ -30,7 +30,7 @@
         }
         .form-group label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             font-family: 'Montserrat SemiBold', sans-serif;
             color: #333333;
         }
@@ -43,8 +43,8 @@
             font-family: 'Montserrat Medium', sans-serif;
             border: 1px solid #cccccc;
             border-radius: 5px;
-            transition: border-color 0.2s;
             background-color: #ffffff;
+            transition: border-color 0.2s;
         }
         .form-group select {
             -webkit-appearance: none;
@@ -60,16 +60,12 @@
             outline: none;
             border-color: #615f5f;
         }
-        .input-error {
-            border-color: #ff4c4c !important;
-        }
-        .error {
-            position: absolute;
-            bottom: -18px;
-            left: 0;
-            font-size: 13px;
-            color: #ff4c4c;
-            font-family: 'Montserrat Medium', sans-serif;
+        /* убрали .input-error и .error */
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
         .btn-submit {
             background-color: #beffe6;
@@ -81,10 +77,21 @@
             border-radius: 7px;
             cursor: pointer;
             transition: background-color 0.3s;
-            display: inline-block;
+            text-decoration: none;
         }
         .btn-submit:hover {
             background-color: #93edca;
+        }
+        .alert-success {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+            padding: 12px 20px;
+            margin-bottom: 30px;
+            border: 1px solid #c8e6c9;
+            border-radius: 7px;
+            font-family: 'Montserrat Medium', sans-serif;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
     </style>
 @endsection
@@ -95,7 +102,7 @@
     <div class="student-content-wrapper">
         <h2>Оставить отзыв</h2>
         <div class="review-form">
-            <form action="{{ route('student.reviews.store') }}" method="POST" novalidate>
+            <form id="review-form" action="{{ route('student.reviews.store') }}" method="POST" novalidate>
                 @csrf
 
                 {{-- Заголовок --}}
@@ -106,23 +113,13 @@
                         id="title"
                         name="title"
                         value="{{ old('title') }}"
-                        required
-                        class="{{ $errors->has('title') ? 'input-error' : '' }}"
                     >
-                    @if($errors->has('title'))
-                        <div class="error">{{ $errors->first('title') }}</div>
-                    @endif
                 </div>
 
                 {{-- Оценка --}}
                 <div class="form-group">
                     <label for="rating">Оценка (1–5)</label>
-                    <select
-                        id="rating"
-                        name="rating"
-                        required
-                        class="{{ $errors->has('rating') ? 'input-error' : '' }}"
-                    >
+                    <select id="rating" name="rating">
                         <option value="" disabled {{ old('rating') ? '' : 'selected' }}>— выберите —</option>
                         @for($i = 1; $i <= 5; $i++)
                             <option value="{{ $i }}" {{ old('rating') == $i ? 'selected' : '' }}>
@@ -130,19 +127,12 @@
                             </option>
                         @endfor
                     </select>
-                    @if($errors->has('rating'))
-                        <div class="error">{{ $errors->first('rating') }}</div>
-                    @endif
                 </div>
 
-                {{-- Курс (необязательно) --}}
+                {{-- Курс --}}
                 <div class="form-group">
                     <label for="course_id">Курс (необязательно)</label>
-                    <select
-                        id="course_id"
-                        name="course_id"
-                        class="{{ $errors->has('course_id') ? 'input-error' : '' }}"
-                    >
+                    <select id="course_id" name="course_id">
                         <option value="">— без привязки —</option>
                         @foreach($courses as $course)
                             <option value="{{ $course->id }}"
@@ -151,31 +141,84 @@
                             </option>
                         @endforeach
                     </select>
-                    @if($errors->has('course_id'))
-                        <div class="error">{{ $errors->first('course_id') }}</div>
-                    @endif
                 </div>
 
                 {{-- Комментарий --}}
                 <div class="form-group">
                     <label for="comment">Комментарий</label>
-                    <textarea
-                        id="comment"
-                        name="comment"
-                        rows="4"
-                        class="{{ $errors->has('comment') ? 'input-error' : '' }}"
-                    >{{ old('comment') }}</textarea>
-                    @if($errors->has('comment'))
-                        <div class="error">{{ $errors->first('comment') }}</div>
-                    @endif
+                    <textarea id="comment" name="comment" rows="4">{{ old('comment') }}</textarea>
                 </div>
 
                 <button type="submit" class="btn-submit">Отправить отзыв</button>
             </form>
         </div>
     </div>
+
+    {{-- Всплывающие уведомления и валидация --}}
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Берём «сырые» ошибки из PHP
+                let raw = @json($errors->all());
+
+                // Заменяем ключ 'validation.uploaded' и фильтруем пустые
+                let errs = raw.map(msg => {
+                    return msg === 'validation.uploaded'
+                        ? 'Ошибка при загрузке файла.'
+                        : msg;
+                }).filter(Boolean);
+
+                // Если есть ошибки — показываем их в Swal
+                const list = errs.map(m => `<li>${m}</li>`).join('');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Ошибка валидации',
+                    html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                    showConfirmButton: false,
+                    timer: 5000,
+                    timerProgressBar: true,
+                    customClass: { popup: 'swal2-toast' }
+                });
+            });
+        </script>
+    @endif
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Клиентская валидация
+            const form = document.getElementById('review-form');
+            form.addEventListener('submit', function(e) {
+                const errsClient = [];
+                if (!form.title.value.trim()) {
+                    errsClient.push('Введите заголовок.');
+                }
+                if (!form.rating.value) {
+                    errsClient.push('Выберите оценку.');
+                }
+                if (!form.comment.value.trim()) {
+                    errsClient.push('Введите комментарий.');
+                }
+
+                if (errsClient.length) {
+                    e.preventDefault();
+                    const list = errsClient.map(m => `<li>${m}</li>`).join('');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Ошибка валидации',
+                        html: `<ul style="text-align:left; margin:0">${list}</ul>`,
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                }
+            });
+
+            // Уведомление об успешном создании
             @if(session('success'))
             Swal.fire({
                 toast: true,
@@ -185,8 +228,11 @@
                 showConfirmButton: false,
                 timer: 6000,
                 timerProgressBar: true,
+                customClass: { popup: 'swal2-toast' }
             });
+            @php session()->forget('success'); @endphp
             @endif
         });
     </script>
 @endsection
+

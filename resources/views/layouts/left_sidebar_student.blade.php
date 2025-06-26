@@ -69,8 +69,9 @@
             <li><a href="{{ route('student.statistics') }}" class="{{ request()->routeIs('student.statistics') ? 'active' : '' }}">Статистика</a></li>
             <li><a href="{{ route('student.courses') }}" class="{{ request()->routeIs('student.courses') ? 'active' : '' }}">Мои курсы</a></li>
             <li><a href="{{ route('student.timetable') }}" class="{{ request()->routeIs('student.timetable') ? 'active' : '' }}">Расписание</a></li>
-            <li><a href="{{ route('student.homeworks') }}" class="{{ request()->routeIs('student.homeworks') ? 'active' : '' }}">Домашние задания</a></li>
             <li><a href="{{ route('student.lessons.index') }}" class="{{ request()->routeIs('student.lessons.index') ? 'active' : '' }}">Мои уроки</a></li>
+            <li><a href="{{ route('student.homeworks') }}" class="{{ request()->routeIs('student.homeworks') ? 'active' : '' }}">Домашние задания</a></li>
+            <li><a href="{{ route('student.attendance') }}" class="{{ request()->routeIs('student.attendance') ? 'active' : '' }}">Посещаемость</a></li>
 {{--            <li><a href="#" class="#">Домашние задания</a></li>--}}
 {{--            <li><a href="#" class="#">Посещаемость</a></li>--}}
             <li><a href="{{ route('student.reviews.index') }}" class="{{ request()->routeIs('student.reviews.index') ? 'active' : '' }}">Оставить отзыв</a></li>

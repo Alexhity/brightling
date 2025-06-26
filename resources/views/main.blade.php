@@ -1900,7 +1900,6 @@
 
 
                         <div class="form-group">
-                            <label for="lesson_id">Время урока</label>
                             <select id="lesson_id" name="lesson_id" required>
                                 <option value="" disabled {{ old('lesson_id') ? '' : 'selected' }}>— выберите время —</option>
                                 @foreach($timeSlots as $dateKey => $slots)
@@ -2015,7 +2014,7 @@
                 </div>
                 <div class="card">
                     <h3>Длительность</h3>
-                    <p>Всего 25-30 минут, чтобы погрузиться в процесс обучения и узнать о своих сильных сторонах.</p>
+                    <p>Всего 15 минут, чтобы погрузиться в процесс обучения и узнать о своих сильных сторонах.</p>
                 </div>
                 <div class="card">
                     <h3>Подарок</h3>

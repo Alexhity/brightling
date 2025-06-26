@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('status');
             $table->integer('mark')->unsigned()->nullable();
             $table->foreignId('course_id')
+                ->nullable()
                 ->constrained('courses')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();

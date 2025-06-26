@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
+
 
 
 

@@ -307,6 +307,19 @@
 
 @section('content')
     <div class="admin-content-wrapper">
+        @if(session('success'))
+            <script>
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: @json(session('success')),
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
+            </script>
+        @endif
 
         <form method="GET" action="{{ route('courses') }}">
             <div class="filter-bar">
@@ -354,6 +367,8 @@
             </div>
         </form>
 
+
+
         <div class="grid-cards">
             @forelse($courses as $course)
                 @php
@@ -370,34 +385,22 @@
                         <small>{{ $course->language->name }} • {{ $levels[$course->level] }}</small>
                     </div>
                     <div class="card-body">
-                        <p>{{ $course->description ?? 'Описание отсутствует' }}</p>
-                        <p><strong>Возраст:</strong> {{ $course->age_group ?? '—' }}</p>
-                        <p><strong>Уроков в месяц:</strong> {{ $count }}</p>
-                        <ul class="schedule">
-                            @forelse($course->timetables->take(3) as $slot)
-                                @php
-                                    $day  = $slot->weekday ? ucfirst($slot->weekday) : ($slot->date->format('d.m.Y') ?? '');
-                                    $time = \Carbon\Carbon::parse($slot->start_time)->format('H:i');
-                                @endphp
-                                <li>{{ $day }} в {{ $time }}</li>
-                            @empty
-                                <li>Расписание не задано</li>
-                            @endforelse
-                            @if($course->timetables->count()>3)
-                                <li>и ещё {{ $course->timetables->count()-3 }}…</li>
-                            @endif
-                        </ul>
-                        @php
-                            $unit  = $course->price->unit_price ?? 0;
-                            $count = $course->lessons_count ?? 0;
-                            // месячная стоимость
-                            $monthly = $unit * $count;
-                        @endphp
-
+                        <!-- …ваш контент… -->
                         <div class="price">{{ $total }} BYN / мес.</div>
                         <span class="price-unit">({{ $unit }} BYN/урок)</span>
                     </div>
-                    <a href="javascript:void(0)" class="btn-enroll js-enroll-btn">Записаться</a>
+
+                    {{-- вместо <a>…</a> вставляем форму --}}
+                    <form action="{{ route('courses.enroll') }}"
+                          method="POST"
+                          class="enroll-form"
+                          style="border-top:1px solid #e0e0e0">
+                        @csrf
+                        <input type="hidden" name="course_id" value="{{ $course->id }}">
+                        <button type="button" class="js-enroll-btn btn-enroll">
+                            Записаться
+                        </button>
+                    </form>
                 </div>
             @empty
                 <p>Курсы не найдены.</p>
@@ -428,45 +431,38 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             document.querySelectorAll('.js-enroll-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const card = btn.closest('.js-course-card');
-                    const form = btn.closest('.enroll-form');
+                    const card        = btn.closest('.js-course-card');
+                    const form        = card.querySelector('.enroll-form');
                     const courseLang  = +card.dataset.language;
                     const courseLevel = card.dataset.level;
 
-                    // 1. Гость
                     @guest
                         return Swal.fire({
                         icon: 'info',
                         title: 'Войдите или оставьте заявку',
-                        html: 'Чтобы записаться, <a href="{{ route("login") }}">войдите</a> или <a href="{{ route("main") }}">заполните заявку</a>.'
+                        html: 'Чтобы записаться, <a href="{{ route("login") }}">войдите</a> или <a href="{{ route("main") }}">заполните заявку</a>.',
                     });
                     @endguest
 
-                    // 2. Только для аутентифицированных сюда попадут уже только залогиненные
-                    @auth
-                    // 2.1 Роль
-                    @if(auth()->user()->role !== 'student')
-                    Swal.fire('Доступно только для студентов', '', 'warning');
-                    return;
-                    @endif
-
-                    // 2.2 Собираем данные о студенте
-                    const userLangs = @json(auth()->user()->languages->pluck('id'));
-                    const userLevel = '{{ auth()->user()->level }}';
-                    const levelsOrder = ['beginner','A1','A2','B1','B2','C1','C2'];
-
-                    // 2.3 Проверяем язык
-                    if (!userLangs.includes(courseLang)) {
-                        return Swal.fire('Язык курса не совпадает с изучаемым вами', '', 'error');
-                    }
-                    // 2.4 Проверяем уровень
-                    if (levelsOrder.indexOf(userLevel) < levelsOrder.indexOf(courseLevel)) {
-                        return Swal.fire('Ваш уровень не подходит под данный курс', '', 'error');
+                        @auth
+                    if ('{{ auth()->user()->role }}' !== 'student') {
+                        Swal.fire('Доступно только для студентов', '', 'warning');
+                        return;
                     }
 
-                    // 3. Подтверждаем запись через Swal
+                    const userLangLevels = @json(auth()->user()->languages->pluck('pivot.level', 'id'));
+                    const studentLevel   = userLangLevels[courseLang] ?? null;
+                    if (!studentLevel) {
+                        return Swal.fire('У вас не изучается язык этого курса', '', 'error');
+                    }
+                    if (studentLevel !== courseLevel) {
+                        return Swal.fire('Ваш уровень не совпадает с уровнем курса', '', 'error');
+                    }
+
                     Swal.fire({
                         title: 'Подтвердить запись?',
                         icon: 'question',
@@ -474,14 +470,50 @@
                         confirmButtonText: 'Записаться',
                         cancelButtonText: 'Отмена'
                     }).then(result => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
+                        if (!result.isConfirmed) return;
+
+                        // Собираем payload
+                        const payload = { course_id: form.course_id.value };
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(payload),
+                        })
+                            .then(res => {
+                                if (!res.ok) throw res;
+                                return res.json();
+                            })
+                            .then(data => {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: data.message || 'Вы успешно записались',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    timerProgressBar: true
+                                });
+                                // Блокируем кнопку, чтобы не дублировать
+                                btn.disabled = true;
+                                btn.textContent = 'Вы записаны';
+                            })
+                            .catch(err => {
+                                // просто логируем, не показываем пользователю
+                                console.error('Enroll error:', err);
+                            });
                     });
                     @endauth
                 });
             });
         });
     </script>
+
+
+
 @endsection
 

@@ -30,80 +30,86 @@ class TeacherLessonController extends Controller
         ));
     }
 
-    /**
-     * Форма редактирования урока
-     */
     public function edit(Lesson $lesson)
     {
-        // relation users подтянет pivot-поля из withPivot в модели
+        // Сразу подгружаем существующих пользователей и курс с языком
         $lesson->load(['users', 'course.language']);
 
-        // 2) Собираем всех студентов, записанных на курс урока
-        $studentIds = $lesson->course->users()->pluck('users.id')->all();
+        // Собираем id студентов курса, если курс есть, иначе — пустой массив
+        $studentIds = $lesson->course
+            ? $lesson->course->users()->pluck('users.id')->all()
+            : [];
 
-        // 3) Синхронизируем их с этим уроком,
-        //    не удаляя уже существующих (syncWithoutDetaching)
+        // Синхронизируем их с этим уроком (не удаляем уже существующих)
         $lesson->users()->syncWithoutDetaching($studentIds);
 
-        // 4) Теперь грузим relation users() — в нём уже будут все студенты
+
+        // Перезагружаем список пользователей, чтобы отобразить обновлённый pivot
         $lesson->load('users', 'course.language');
 
         return view('auth.teacher.lessons.edit', compact('lesson'));
     }
 
-    /**
-     * Сохранение изменений урока
-     */
+
+
     public function update(Request $request, Lesson $lesson)
     {
         $data = $request->validate([
-            'zoom_link'     => ['nullable', 'url'],
-            'material_path' => ['nullable', 'file', 'max:10240'], // до 10 МБ
+            'zoom_link'       => ['nullable','url'],
+            'material_path'   => ['nullable','file','max:10240'],
             'remove_material' => ['nullable','in:1'],
-            'statuses'      => ['array'],
-            'statuses.*'    => ['in:present,absent'],
-            'marks'         => ['array'],
-            'marks.*'       => ['nullable','integer','min:0','max:100'],
+            'statuses'        => ['array'],
+            'statuses.*'      => ['nullable','in:present,absent'],
+            'languages'       => ['array'],
+            'languages.*'     => ['nullable','exists:languages,id'],
+            'levels'          => ['array'],
+            'levels.*'        => ['nullable','in:beginner,A1,A2,B1,B2,C1,C2'],
         ]);
 
         // 1) Ссылка
         $lesson->zoom_link = $data['zoom_link'] ?? null;
 
-        // 1) Обработка удаления старого файла
+        // 2) Удаление материала
         if (!empty($data['remove_material']) && $lesson->material_path) {
-            $old = public_path($lesson->material_path);
-            if (file_exists($old)) {
-                @unlink($old);
-            }
+            @unlink(public_path($lesson->material_path));
             $lesson->material_path = null;
         }
 
-        // 2) Обработка загрузки нового файла
+        // 3) Загрузка нового материала
         if ($request->hasFile('material_path')) {
-            // Если одновременно был старый файл и нет remove_material,
-            // можно тоже удалить старый файл, чтобы не захламлять
             if ($lesson->material_path) {
-                $old = public_path($lesson->material_path);
-                if (file_exists($old)) {
-                    @unlink($old);
-                }
+                @unlink(public_path($lesson->material_path));
             }
-
             $file     = $request->file('material_path');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time().'_'.$file->getClientOriginalName();
             $file->move(public_path('materials'), $filename);
-            $lesson->material_path = 'materials/' . $filename;
+            $lesson->material_path = 'materials/'.$filename;
         }
 
         $lesson->save();
 
-        // Обновляем участников
+        // 4) Обновляем участников
         foreach ($lesson->users as $user) {
-            $pivotData = [
-                'status' => $data['statuses'][$user->id] ?? $user->pivot->status,
-                'mark'   => $data['marks'][$user->id] ?? $user->pivot->mark,
-            ];
-            $lesson->users()->updateExistingPivot($user->id, $pivotData);
+            // статус
+            $rawStatus = $data['statuses'][$user->id] ?? null;
+            $status    = $rawStatus === '' ? null : $rawStatus;
+
+            // Обновляем pivot lesson_user
+            $lesson->users()->updateExistingPivot($user->id, [
+                'status' => $status,
+                // убрали mark
+            ]);
+
+            // Обновляем pivot language_user
+            $langId = $data['languages'][$user->id] ?? null;
+            $lvl    = $data['levels'][$user->id]    ?? null;
+
+            if ($langId) {
+                // attach or update level
+                $user->languages()->syncWithoutDetaching([
+                    $langId => ['level' => $lvl]
+                ]);
+            }
         }
 
         return redirect()

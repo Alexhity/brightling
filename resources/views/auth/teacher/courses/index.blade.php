@@ -56,6 +56,24 @@
 @endsection
 
 @section('content')
+    @php
+        $formatLabels = [
+            'individual' => 'Индивидуальный',
+            'group'      => 'Групповой',
+            'online'     => 'Онлайн',
+            'offline'    => 'Оффлайн',
+            'hybrid'     => 'Смешанный',
+        ];
+        $levelLabels = [
+            'beginner' => 'Начинающий',
+            'A1'       => 'A1',
+            'A2'       => 'A2',
+            'B1'       => 'B1',
+            'B2'       => 'B2',
+            'C1'       => 'C1',
+            'C2'       => 'C2',
+        ];
+    @endphp
     @include('layouts.left_sidebar_teacher')
 
     <div class="teacher-content-wrapper">
@@ -106,8 +124,8 @@
                     </td>
 
                     <td>{{ $course->title }}</td>
-                    <td>{{ ucfirst($course->format) }}</td>
-                    <td>{{ strtoupper($course->level) }}</td>
+                    <td>{{ $formatLabels[$course->format] ?? ucfirst($course->format) }}</td>
+                    <td>{{ $levelLabels[$course->level]   ?? strtoupper($course->level) }}</td>
                     <td>{{ $course->language->name }}</td>
                     <td>{{ $course->students_count }}</td>
 
@@ -163,8 +181,7 @@
                     <p><strong>Преподаватели:</strong> ${teachers}</p>
                     <p><strong>Студенты:</strong> ${students}</p>
                     <hr>
-                    <p><strong>Расписание:</strong></p>
-                    ${scheduleHtml}
+
                 `,
                         width: 600,
                         confirmButtonText: 'Закрыть'

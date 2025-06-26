@@ -54,6 +54,26 @@
 @section('content')
     @include('layouts.left_sidebar_student')
 
+    @php
+        // Метки для формата и уровня на русском
+        $formatLabels = [
+            'individual' => 'Индивидуальный',
+            'group'      => 'Групповой',
+            'online'     => 'Онлайн',
+            'offline'    => 'Оффлайн',
+            'hybrid'     => 'Смешанный',
+        ];
+        $levelLabels = [
+            'beginner' => 'Начинающий',
+            'A1'       => 'A1',
+            'A2'       => 'A2',
+            'B1'       => 'B1',
+            'B2'       => 'B2',
+            'C1'       => 'C1',
+            'C2'       => 'C2',
+        ];
+    @endphp
+
     <div class="student-content-wrapper">
         <h2>Мои курсы</h2>
         <table class="courses">
@@ -76,8 +96,8 @@
                                 style="font-size: 18px"
                                 data-title="{{ $course->title }}"
                                 data-description="{{ $course->description }}"
-                                data-format="{{ ucfirst($course->format) }}"
-                                data-level="{{ strtoupper($course->level) }}"
+                                data-format="{{ $formatLabels[$course->format] ?? ucfirst($course->format) }}"
+                                data-level="{{ $levelLabels[$course->level]   ?? strtoupper($course->level) }}"
                                 data-language="{{ $course->language->name }}"
                                 data-teacher="{{ $course->teachers->map(fn($t)=> $t->first_name.' '.$t->last_name)->implode(', ') }}"
                                 data-schedule='@json($course->schedule_lines)'>
@@ -122,8 +142,7 @@
                     <hr>
                     <p><strong>Преподаватель:</strong> ${btn.dataset.teacher || '—'}</p>
                     <hr>
-                    <p><strong>Расписание:</strong></p>
-                    ${scheduleHtml}
+
                 `,
                         width: 600,
                         confirmButtonText: 'Закрыть'

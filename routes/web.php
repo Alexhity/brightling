@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminPriceController;
 use App\Http\Controllers\AdminReviewsController;
 use App\Http\Controllers\AdminTimetableController;
 use App\Http\Controllers\AdminUsersController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\StudentCoursesController;
 use App\Http\Controllers\StudentHomeworkController;
@@ -67,6 +68,8 @@ Auth::routes();
 
 Route::get('/courses', [\App\Http\Controllers\CourseController::class, 'index'])
     ->name('courses');
+
+
 
 Route::get('/about-school', [AboutSchoolController::class, 'index'])->name('about.school');
 
@@ -410,8 +413,12 @@ Route::get('student/homeworks', [StudentHomeworkController::class, 'studentIndex
 Route::get('student/lessons', [StudentLessonController::class, 'index'])
     ->name('student.lessons.index')->middleware([ IsStudent::class]);
 
+Route::get('student/attendance', [AttendanceController::class, 'show'])
+    ->name('student.attendance')->middleware([ IsStudent::class]);
 
 
+Route::post('/courses/enroll', [CourseController::class, 'enroll'])
+    ->name('courses.enroll');
 
 
 

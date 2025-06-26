@@ -6,7 +6,7 @@
             margin-left: 200px;
             padding: 20px;
             width: calc(100% - 220px);
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Montserrat Medium', sans-serif;
         }
         .header-row {
             display: flex;
@@ -18,14 +18,6 @@
             font-family: 'Montserrat Bold', sans-serif;
             font-size: 32px;
             margin: 0;
-        }
-        .alert-success {
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            background: #d1e7dd;
-            color: #0f5132;
-            border-radius: 4px;
-            font-family: 'Montserrat Medium', sans-serif;
         }
         .section {
             background: #fff;
@@ -50,20 +42,26 @@
             font-family: 'Montserrat Medium', sans-serif;
             text-align: left;
         }
-        form.inline {
-            display: inline;
-        }
         .btn-delete {
             background: none;
             border: none;
-            color: #c0392b;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 20px;
+            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;      /* иконка чёрная */
+            transition: color .2s;
+        }
+        .btn-delete:hover {
+            color: #c0392b;
         }
         .form-add {
             display: flex;
             align-items: flex-end;
             gap: 12px;
+            margin-bottom: 16px;
         }
         .form-add select {
             flex: 1;
@@ -106,12 +104,45 @@
         </div>
 
         @if(session('success'))
-            <div class="alert-success">{{ session('success') }}</div>
+            <script>
+                document.addEventListener('DOMContentLoaded', ()=> {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: @json(session('success')),
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
+                    });
+                });
+            </script>
+            @php session()->forget('success'); @endphp
         @endif
 
         {{-- Преподаватели --}}
         <div class="section">
             <h3>Преподаватели</h3>
+
+            {{-- Форма добавления преподавателя --}}
+            <form action="{{ route('admin.courses.addTeacher', $course) }}"
+                  method="POST"
+                  class="form-add"
+                  novalidate>
+                @csrf
+                <select name="user_id" required>
+                    <option value="">Выберите преподавателя</option>
+                    @foreach($allTeachers as $ut)
+                        @if(!$teachers->contains($ut))
+                            <option value="{{ $ut->id }}">
+                                {{ $ut->first_name }} {{ $ut->last_name }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+                <button type="submit">Добавить преподавателя</button>
+            </form>
 
             {{-- Список текущих --}}
             <table>
@@ -130,11 +161,13 @@
                         <td>
                             <form action="{{ route('admin.courses.removeTeacher', [$course, $t]) }}"
                                   method="POST"
-                                  class="inline"
-                                  onsubmit="return confirm('Удалить преподавателя {{ $t->first_name }} {{ $t->last_name }}?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-delete" title="Удалить">🗑️</button>
+                                  data-delete-form
+                                  data-name="{{ $t->first_name }} {{ $t->last_name }}">
+                                @csrf @method('DELETE')
+                                <!-- сделаем submit-кнопкой -->
+                                <button type="submit" class="btn-delete" title="Удалить преподавателя">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -143,25 +176,30 @@
                 @endforelse
                 </tbody>
             </table>
-
-            {{-- Форма добавления --}}
-            <form action="{{ route('admin.courses.addTeacher', $course) }}" method="POST" class="form-add">
-                @csrf
-                <select name="user_id" required>
-                    <option value="">Выберите преподавателя</option>
-                    @foreach($allTeachers as $ut)
-                        @if(!$teachers->contains($ut))
-                            <option value="{{ $ut->id }}">{{ $ut->first_name }} {{ $ut->last_name }}</option>
-                        @endif
-                    @endforeach
-                </select>
-                <button type="submit">Добавить</button>
-            </form>
         </div>
 
         {{-- Студенты --}}
         <div class="section">
             <h3>Студенты</h3>
+
+            {{-- Форма добавления студента --}}
+            <form action="{{ route('admin.courses.addStudent', $course) }}"
+                  method="POST"
+                  class="form-add"
+                  novalidate>
+                @csrf
+                <select name="user_id" required>
+                    <option value="">Выберите студента</option>
+                    @foreach($allStudents as $us)
+                        @if(!$students->contains($us))
+                            <option value="{{ $us->id }}">
+                                {{ $us->first_name }} {{ $us->last_name }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+                <button type="submit">Добавить студента</button>
+            </form>
 
             {{-- Список текущих --}}
             <table>
@@ -180,11 +218,13 @@
                         <td>
                             <form action="{{ route('admin.courses.removeStudent', [$course, $s]) }}"
                                   method="POST"
-                                  class="inline"
-                                  onsubmit="return confirm('Удалить студента {{ $s->first_name }} {{ $s->last_name }}?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-delete" title="Удалить">🗑️</button>
+                                  onsubmit="return false"
+                                  data-delete-form
+                                  data-name="{{ $s->first_name }} {{ $s->last_name }}">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn-delete" title="Удалить студента">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -193,20 +233,26 @@
                 @endforelse
                 </tbody>
             </table>
-
-            {{-- Форма добавления --}}
-            <form action="{{ route('admin.courses.addStudent', $course) }}" method="POST" class="form-add">
-                @csrf
-                <select name="user_id" required>
-                    <option value="">Выберите студента</option>
-                    @foreach($allStudents as $us)
-                        @if(!$students->contains($us))
-                            <option value="{{ $us->id }}">{{ $us->first_name }} {{ $us->last_name }}</option>
-                        @endif
-                    @endforeach
-                </select>
-                <button type="submit">Добавить</button>
-            </form>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Подтверждение удаления
+            document.querySelectorAll('form[data-delete-form]').forEach(form => {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: `Удалить «${form.dataset.name}»?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Да, удалить',
+                        cancelButtonText: 'Отмена',
+                        reverseButtons: true
+                    }).then(res => res.isConfirmed && form.submit());
+                });
+            });
+        });
+    </script>
+
 @endsection
+

@@ -119,20 +119,20 @@
                     ];
                 @endphp
                 <tr>
-                    <td>{{ $lesson->course->title }}</td>
-                    <td>{{ $dateTime->format('d.m.Y') }} в {{ $dateTime->format('H:i') }}</td>
-                    <td>
-                        @if($lesson->zoom_link)
-                            <a href="{{ $lesson->zoom_link }}" target="_blank">Открыть</a>
-                        @else
-                            —
-                        @endif
+                    <td>{{ optional($lesson->course)->title ?? '—' }}</td>
+                                    <td>{{ $dateTime->format('d.m.Y') }} в {{ $dateTime->format('H:i') }}</td>
+                                    <td>
+                                        @if($lesson->zoom_link)
+                                            <a href="{{ $lesson->zoom_link }}" target="_blank">Открыть</a>
+                                        @else
+                                            —
+                                        @endif
 
-                    </td>
-                    <td>
-                        @if($lesson->material_path)
-                            <a href="{{ asset($lesson->material_path) }}" target="_blank">
-                                {{ \Illuminate\Support\Str::afterLast($lesson->material_path, '/') }}
+                                    </td>
+                                    <td>
+                                        @if($lesson->material_path)
+                                            <a href="{{ asset($lesson->material_path) }}" target="_blank">
+                                            {{ \Illuminate\Support\Str::afterLast($lesson->material_path, '/') }}
                             </a>
                         @else
                             —

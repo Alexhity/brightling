@@ -1,7 +1,5 @@
 {{-- resources/views/auth/admin/requests/index.blade.php --}}
-@php
-    use Carbon\Carbon;
-@endphp
+@php use Carbon\Carbon; @endphp
 @php
     $roleLabels = [
         'student' => 'Студент',
@@ -14,7 +12,7 @@
 @section('styles')
     <style>
         .admin-content-wrapper {
-            margin-left: 120px;
+            margin-left: 200px;
             width: calc(100% - 200px);
             font-family: 'Montserrat Medium', sans-serif;
         }
@@ -22,14 +20,33 @@
             font-family: 'Montserrat Bold', sans-serif;
             color: #333333;
             font-size: 32px;
-            margin-top: 30px;
-            margin-bottom: 30px;
+            margin: 30px 0;
             text-align: center;
         }
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-create {
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #e6e2f8;
+            color: black;
+            text-decoration: none;
+            border-radius: 7px;
+            font-family: 'Montserrat Medium', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-create:hover {
+            background-color: #c4b6f3;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1rem;
         }
         table.requests {
             width: 100%;
@@ -42,33 +59,37 @@
             padding: 12px 20px;
             border-bottom: 1px solid #ddd;
             text-align: center;
+            font-family: 'Montserrat Medium', sans-serif;
+            color: #333333;
         }
         .requests th {
             background: #fff6d0;
             font-family: 'Montserrat SemiBold', sans-serif;
-            color: #333333;
             font-size: 16px;
         }
-        .requests td {
-            font-family: 'Montserrat Medium', sans-serif;
-            color: #333333;
-            font-size: 14px;
-        }
-        .table-action-delete {
-            display: inline-block;
-            padding: 6px 12px;
-            background: #ffcccc;
-            color: black;
-            font-family: 'Montserrat Medium', sans-serif;
-            font-size: 14px;
+        .expand-btn {
+            background: none;
             border: none;
-            border-radius: 7px;
+            font-size: 18px;
             cursor: pointer;
-            transition: background .2s;
-            text-decoration: none;
+            color: #333333;
         }
-        .table-action-delete:hover {
-            background: #ffaaaa;
+        .custom-select {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Montserrat Medium', sans-serif;
+        }
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #c0392b;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color .2s;
+        }
+        .btn-delete:hover {
+            color: #a93226;
         }
     </style>
 @endsection
@@ -79,9 +100,9 @@
     <div class="admin-content-wrapper">
         <div class="header-row">
             <h2>Заявки на бесплатный урок</h2>
-            <form action="{{ route('admin.requests.createProfilesAll') }}" method="POST" onsubmit="return confirm('Обработать все заявки?');">
+            <button id="process-all-btn" class="btn-create">Обработать все</button>
+            <form id="process-all-form" action="{{ route('admin.requests.createProfilesAll') }}" method="POST" style="display:none">
                 @csrf
-                <button type="submit" class="btn-create">Обработать все</button>
             </form>
         </div>
 
@@ -96,52 +117,53 @@
                         showConfirmButton: false,
                         timer: 3000,
                         timerProgressBar: true,
+                        customClass: { popup: 'swal2-toast' }
                     });
                 });
             </script>
             @php session()->forget('success'); @endphp
         @endif
 
-        @if($requests->isEmpty())
-            <p style="text-align:center; font-style:italic; color:#666;">Нет заявок.</p>
-        @else
+        <div class="table-responsive">
             <table class="requests">
                 <thead>
                 <tr>
+                    <th></th>
                     <th>ID</th>
                     <th>Имя</th>
-                    <th>Телефон</th>
                     <th>Email</th>
                     <th>Язык</th>
                     <th>Роль</th>
                     <th>Дата заявки</th>
-                    <th>Дата урока</th>
-                    <th>Время урока</th>
                     <th>Удалить</th>
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($requests as $app)
-                    <tr>
+                @forelse($requests as $app)
+                    <tr
+                        data-phone="{{ $app->phone }}"
+                        data-lesson-date="{{ optional($app->lesson)->date
+                            ? Carbon::parse($app->lesson->date)->format('d.m.Y')
+                            : '—' }}"
+                        data-lesson-time="{{ optional($app->lesson)->time
+                            ? Carbon::parse($app->lesson->time)->format('H:i')
+                            : '—' }}"
+                    >
+                        {{-- Плюсик --}}
+                        <td><button class="expand-btn">＋</button></td>
+
+                        {{-- Основные колонки --}}
                         <td>{{ $app->id }}</td>
                         <td>{{ $app->name }}</td>
-                        <td>{{ $app->phone }}</td>
                         <td>{{ $app->email }}</td>
                         <td>{{ $app->language->name ?? '—' }}</td>
                         <td>
-                            {{-- 1. Выводим текущую роль --}}
-
-
-                            {{-- 2. Форма для смены --}}
                             <form action="{{ route('admin.requests.updateRole', $app->id) }}"
-                                  method="POST"
-                                  style="margin-top:4px;">
-                                @csrf
-                                @method('PATCH')
+                                  method="POST" style="display:inline">
+                                @csrf @method('PATCH')
                                 <select name="requested_role"
                                         class="custom-select"
-                                        onchange="this.form.submit()"
-                                        style="font-size:14px;">
+                                        onchange="this.form.submit()">
                                     @foreach($roleLabels as $key => $label)
                                         <option value="{{ $key }}"
                                             {{ $app->requested_role === $key ? 'selected' : '' }}>
@@ -151,48 +173,69 @@
                                 </select>
                             </form>
                         </td>
-
-
                         <td>{{ $app->created_at->format('d.m.Y H:i') }}</td>
 
-                        <td>
-                            @if($app->lesson && $app->lesson->date)
-                                {{ Carbon::parse($app->lesson->date)->format('d.m.Y') }}
-                            @else
-                                —
-                            @endif
-                        </td>
-                        <td>
-                            @if($app->lesson && $app->lesson->time)
-                                {{ Carbon::parse($app->lesson->time)->format('H:i') }}
-                            @else
-                                —
-                            @endif
-                        </td>
+                        {{-- Удаление --}}
                         <td>
                             <form action="{{ route('admin.requests.destroy', $app->id) }}"
                                   method="POST"
-                                  data-delete-form
                                   data-app-id="{{ $app->id }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="table-action-delete">Удалить</button>
+                                @csrf @method('DELETE')
+                                <button type="button" class="btn-delete">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="8" style="font-style:italic; color:#666;">
+                            Нет заявок.
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
-
-
-        @endif
+        </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('form[data-delete-form]').forEach(form => {
-                form.addEventListener('submit', e => {
-                    e.preventDefault();
+            // Подтверждение «Обработать все»
+            document.getElementById('process-all-btn').addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Обработать все заявки?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Да, обработать',
+                    cancelButtonText: 'Отмена'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        document.getElementById('process-all-form').submit();
+                    }
+                });
+            });
+
+            // Раскрытие деталей
+            document.querySelectorAll('.expand-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tr = btn.closest('tr');
+                    Swal.fire({
+                        title: `Заявка #${tr.children[1].textContent}`,
+                        html: `
+                        <p><strong>Телефон:</strong> ${tr.dataset.phone}</p>
+                        <p><strong>Дата урока:</strong> ${tr.dataset.lessonDate}</p>
+                        <p><strong>Время урока:</strong> ${tr.dataset.lessonTime}</p>
+                    `,
+                        width: 500,
+                        confirmButtonText: 'Закрыть'
+                    });
+                });
+            });
+
+            // Подтверждение удаления
+            document.querySelectorAll('button.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const form = btn.closest('form');
                     const id = form.dataset.appId;
                     Swal.fire({
                         title: `Удалить заявку #${id}?`,
@@ -200,12 +243,15 @@
                         showCancelButton: true,
                         confirmButtonText: 'Да, удалить',
                         cancelButtonText: 'Отмена',
-                        reverseButtons: true,
-                    }).then(result => {
-                        if (result.isConfirmed) form.submit();
+                        reverseButtons: true
+                    }).then(res => {
+                        if (res.isConfirmed) {
+                            form.submit();
+                        }
                     });
                 });
             });
         });
     </script>
 @endsection
+

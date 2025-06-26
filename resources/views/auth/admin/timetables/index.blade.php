@@ -15,6 +15,7 @@
         .week-nav {
             display:flex;
             align-items:center;
+            justify-content: center;
             gap:1rem;
             margin-bottom:20px;
             text-align: center;
@@ -168,7 +169,7 @@
     @include('layouts.left_sidebar_admin')
     <div class="admin-content-wrapper">
         <div class="header-row">
-            <div class="grid">
+            <div class="grid" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
                 <h2>Расписание</h2>
                 <div>
                     <a href="{{ route('admin.timetables.create-slot') }}" class="btn-create">+ Создать слот</a>
@@ -305,12 +306,12 @@
                                     {{-- Разрешаем редактирование для всех слотов, кроме полностью неактивных --}}
                                     @if($slot->active || $isCancelled)
                                         <div class="slot-actions">
-                                            @if(!$isCancelled && $slot->active)
+
                                                 <a href="{{ route('admin.timetables.edit-slot', ['timetable' => $baseSlot->id, 'date' => $dateKey]) }}"
                                                    class="btn-edit">
                                                     Редактировать
                                                 </a>
-                                            @endif
+
 
                                             {{-- Добавляем кнопку удаления для регулярных слотов --}}
                                             @if(is_null($slot->course_id) && is_null($slot->parent_id))

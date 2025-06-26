@@ -1,4 +1,3 @@
-{{-- resources/views/auth/admin/reviews/index.blade.php --}}
 @extends('layouts.app')
 
 @section('styles')
@@ -88,6 +87,13 @@
         .btn-delete:hover {
             background: #ff9999;
         }
+        .table-action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .table-action-btn:not(:disabled):hover {
+            /* hover-эффекты применяются только к активным кнопкам */
+        }
         .badge-pending {
             background: #fff3cd;
             color: #856404;
@@ -109,7 +115,6 @@
             border-radius: 4px;
             font-size: 13px;
         }
-
         .btn-view {
             background: #e6f7ff;
         }
@@ -165,25 +170,33 @@
                     </td>
                     <td>{{ $review->created_at->format('d.m.Y') }}</td>
                     <td>
+                        {{-- Одобрить --}}
+                        <form action="{{ route('admin.reviews.updateStatus', $review) }}"
+                              method="POST"
+                              class="inline-block">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="approved">
+                            <button
+                                type="submit"
+                                class="table-action-btn btn-approve"
+                                {{ $review->status === 'approved' ? 'disabled' : '' }}>
+                                Одобрить
+                            </button>
+                        </form>
 
-                        @if($review->status === 'pending')
-                            {{-- Одобрить --}}
-                            <form action="{{ route('admin.reviews.updateStatus', $review) }}"
-                                  method="POST"
-                                  class="inline-block">
-                                @csrf @method('PATCH')
-                                <input type="hidden" name="status" value="approved">
-                                <button type="submit" class="table-action-btn btn-approve">Одобрить</button>
-                            </form>
-                            {{-- Отклонить --}}
-                            <form action="{{ route('admin.reviews.updateStatus', $review) }}"
-                                  method="POST"
-                                  class="inline-block">
-                                @csrf @method('PATCH')
-                                <input type="hidden" name="status" value="rejected">
-                                <button type="submit" class="table-action-btn btn-reject">Отклонить</button>
-                            </form>
-                        @endif
+                        {{-- Отклонить --}}
+                        <form action="{{ route('admin.reviews.updateStatus', $review) }}"
+                              method="POST"
+                              class="inline-block">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="rejected">
+                            <button
+                                type="submit"
+                                class="table-action-btn btn-reject"
+                                {{ $review->status === 'rejected' ? 'disabled' : '' }}>
+                                Отклонить
+                            </button>
+                        </form>
 
                         {{-- Удалить --}}
                         <form action="{{ route('admin.reviews.destroy', $review) }}"
@@ -192,13 +205,15 @@
                               data-review-title="{{ $review->title }}"
                               class="inline-block">
                             @csrf @method('DELETE')
-                            <button type="submit" class="table-action-btn btn-delete">Удалить</button>
+                            <button type="submit" class="table-action-btn btn-delete">
+                                Удалить
+                            </button>
                         </form>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="padding: 20px; font-style: italic; color: #666;">
+                    <td colspan="7" style="padding: 20px; font-style: italic; color: #666;">
                         Нет отзывов для модерации
                     </td>
                 </tr>
@@ -240,17 +255,17 @@
                 });
             });
 
-
+            // раскрытие полного отзыва
             document.querySelectorAll('.btn-expand').forEach(btn => {
                 btn.addEventListener('click', () => {
                     Swal.fire({
                         title: btn.dataset.title,
                         html: `
-                    <p><strong>Курс:</strong> ${btn.dataset.course}</p>
-                    <p><strong>Оценка:</strong> ${btn.dataset.rating} / 5</p>
-                    <hr>
-                    <p>${btn.dataset.comment.replace(/\n/g, '<br>')}</p>
-                `,
+                            <p><strong>Курс:</strong> ${btn.dataset.course}</p>
+                            <p><strong>Оценка:</strong> ${btn.dataset.rating} / 5</p>
+                            <hr>
+                            <p>${btn.dataset.comment.replace(/\n/g, '<br>')}</p>
+                        `,
                         width: 600,
                         confirmButtonText: 'Закрыть'
                     });

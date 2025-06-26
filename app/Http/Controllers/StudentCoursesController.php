@@ -22,6 +22,7 @@ class StudentCoursesController extends Controller
     {
         // Получаем авторизованного студента
         $student = Auth::user();
+        $course = Course::with(['language','teachers','timetables']) ->get();
 
         // Предполагаем, что у модели User настроена связь courses()
         // Загружаем курсы с учителем (один) или учителями (если их несколько) и расписанием.

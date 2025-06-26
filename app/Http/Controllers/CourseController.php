@@ -67,23 +67,16 @@ class CourseController extends Controller
     public function enroll(Request $request)
     {
         $request->validate([
-            'course_id' => 'required|exists:courses,id'
+            'course_id' => 'required|exists:courses,id',
         ]);
 
-        $user = auth()->user();
+        $user     = auth()->user();
         $courseId = $request->course_id;
 
-        // Проверка дублирования записи
-        if ($user->courses()->where('course_id', $courseId)->exists()) {
-            return back()->withErrors('Вы уже записаны на этот курс');
-        }
+        // синхронизируем без удаления существующих, но и без дублирования
+        $user->courses()->syncWithoutDetaching([ $courseId ]);
 
-        // Создание записи
-        $user->courses()->attach($courseId, [
-            'enrolled_at' => now(),
-            'status' => 'active'
-        ]);
-
+        // всегда возвращаем success
         return back()->with('success', 'Вы успешно записаны на курс!');
     }
 }
