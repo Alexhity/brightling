@@ -1901,7 +1901,7 @@
 
                         <div class="form-group">
                             <select id="lesson_id" name="lesson_id" required>
-                                <option value="" disabled {{ old('lesson_id') ? '' : 'selected' }}>— выберите время —</option>
+                                <option value="" disabled {{ old('lesson_id') ? '' : 'selected' }}>Выберите время</option>
                                 @foreach($timeSlots as $dateKey => $slots)
                                     <optgroup label="{{ $availableDates[$dateKey] }}">
                                         @foreach($slots as $slot)
