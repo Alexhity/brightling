@@ -18,7 +18,9 @@ class StudentLessonController extends Controller
         $windowStart      = $currentWeekStart->copy()->subWeeks(2)->startOfWeek();
         $windowEnd        = $currentWeekStart->copy()->addWeeks(2)->endOfWeek();
 
-        $lessons = Lesson::with(['course', 'teacher', 'students'])
+        $lessons = Lesson::with(['course','teacher','students'])
+            // <-- фильтруем только запланированные (scheduled) и завершённые, но НЕ cancelled
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('date', [
                 $windowStart->toDateString(),
                 $windowEnd->toDateString(),

@@ -16,6 +16,8 @@ class TeacherLessonController extends Controller
         $windowEnd   = $currentWeekStart->copy()->addWeeks(2)->endOfWeek();
 
         $lessons = Lesson::with('course')
+            // исключаем отменённые уроки
+            ->where('status', '!=', 'cancelled')
             ->where('teacher_id', Auth::id())
             ->whereBetween('date', [
                 $windowStart->toDateString(),
