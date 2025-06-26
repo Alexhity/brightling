@@ -11,6 +11,10 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
 
+    @vite(['resources/css/app.css', 'resources/css/components/header.css'])
+    <!-- Scripts -->
+    @vite(['resources/css/auth.css', 'resources/js/app.js'])
+
     @yield('styles')
     <style>
         @font-face {

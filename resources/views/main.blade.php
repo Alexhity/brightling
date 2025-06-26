@@ -2,6 +2,7 @@
 
 @section('title', 'Главная')
 @section('styles')
+    @vite('resources/css/main.css')
     <style>
         @font-face {
             font-family: 'Montserrat Medium';
