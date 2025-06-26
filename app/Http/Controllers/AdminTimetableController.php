@@ -212,6 +212,115 @@ class AdminTimetableController extends Controller
             ->with('success', 'Регулярный слот удалён');
     }
 
+    // Добавьте этот метод в класс AdminTimetableController
+    public function updateSlot(Request $request, Timetable $timetable, string $date)
+    {
+        $request->validate([
+            'teacher_id' => 'nullable|exists:users,id',
+            'cancelled'  => 'sometimes|boolean',
+        ]);
+
+        // Находим override-слот (если есть)
+        $overrideSlot = Timetable::where('parent_id', $timetable->id)
+            ->where('date', $date)
+            ->first();
+
+        // 1) Отмена занятия
+        if ($request->has('cancelled') && $request->cancelled) {
+            if ($overrideSlot) {
+                $overrideSlot->update([
+                    'cancelled'        => true,
+                    'override_user_id' => null,
+                ]);
+            } else {
+                Timetable::create([
+                    'parent_id'   => $timetable->id,
+                    'date'        => $date,
+                    'cancelled'   => true,
+                    'course_id'   => $timetable->course_id,
+                    'weekday'     => $timetable->weekday,
+                    'start_time'  => $timetable->start_time,
+                    'duration'    => $timetable->duration,
+                    'type'        => $timetable->type,
+                    'active'      => true,
+                    'user_id'     => $timetable->user_id,
+                    'title'       => $timetable->title,
+                ]);
+            }
+
+            // Генерация урока для отмены
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Занятие отменено');
+        }
+
+        // 2) Восстановление отменённого занятия
+        if ($request->has('cancelled') && !$request->cancelled && $overrideSlot && $overrideSlot->cancelled) {
+            $overrideSlot->delete();
+
+            // Генерация урока для восстановления
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Отмена занятия отменена');
+        }
+
+        // 3) Возврат основного преподавателя
+        if ($request->teacher_id == $timetable->user_id) {
+            if ($overrideSlot) {
+                $overrideSlot->delete();
+            }
+
+            // Генерация урока для возврата учителя
+            LessonGenerator::makeLessonForDate(
+                $timetable,
+                Carbon::parse($date)
+            );
+
+            return redirect()->route('admin.timetables.index')
+                ->with('success', 'Восстановлен основной преподаватель');
+        }
+
+        // 4) Замена преподавателя (override)
+        if ($overrideSlot) {
+            $overrideSlot->update([
+                'override_user_id' => $request->teacher_id,
+                'cancelled'        => false,
+            ]);
+        } else {
+            Timetable::create([
+                'parent_id'        => $timetable->id,
+                'date'             => $date,
+                'override_user_id' => $request->teacher_id,
+                'course_id'        => $timetable->course_id,
+                'weekday'          => $timetable->weekday,
+                'start_time'       => $timetable->start_time,
+                'duration'         => $timetable->duration,
+                'type'             => $timetable->type,
+                'active'           => true,
+                'user_id'          => $timetable->user_id,
+                'title'            => $timetable->title,
+                'cancelled'        => false,
+            ]);
+        }
+
+        // Генерация урока после смены преподавателя
+        LessonGenerator::makeLessonForDate(
+            $timetable,
+            Carbon::parse($date)
+        );
+
+        return redirect()->route('admin.timetables.index')
+            ->with('success', 'Изменения сохранены');
+    }
+
 
 }
 
